@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import { Video, VideoOff, Send, SkipForward, Power } from 'lucide-react';
 
-const SOCKET_URL = 'http://localhost:5000';
+const SOCKET_URL = process.env.REACT_APP_BACKEND_URL || 'https://cider-j4xo.onrender.com';
 
 export default function Cider() {
   const [socket, setSocket] = useState(null);

@@ -5,9 +5,12 @@ const cors = require('cors');
 
 const app = express();
 const server = http.createServer(app);
+
 const io = socketIo(server, {
   cors: {
-    origin: ["http://localhost:3001"],
+    origin: ["http://localhost:3001",
+       "https://cider-gamma.vercel.app"
+    ],
     methods: ["GET", "POST"]
   }
 });

@@ -1,7 +1,7 @@
 {
-  "name": "cider-backend",
+  "name": "omegle-clone-backend",
   "version": "1.0.0",
-  "description": "Backend for Cider - Random video chat app",
+  "description": "Backend for Omegle clone",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
