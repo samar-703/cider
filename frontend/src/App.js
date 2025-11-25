@@ -17,6 +17,7 @@ function Cider() {
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
+  const remoteStreamRef = useRef(null);
   const webrtcSetupInProgressRef = useRef(false);
   const iceCandidateQueueRef = useRef([]);
 
@@ -56,16 +57,48 @@ function Cider() {
           console.log("Remote track received:", event.track.kind);
           console.log("Event streams length:", event.streams?.length);
 
-          if (remoteVideoRef.current) {
-            if (event.streams && event.streams.length > 0) {
-              console.log("Setting remote stream from event.streams");
-              remoteVideoRef.current.srcObject = event.streams[0];
-            } else {
-              console.log("Creating new MediaStream for remote tracks");
-              // Fallback: create new stream if not provided
-              const remoteStream = new MediaStream([event.track]);
-              remoteVideoRef.current.srcObject = remoteStream;
+          try {
+            // Initialize remote stream if not already done
+            if (
+              !remoteStreamRef.current &&
+              event.streams &&
+              event.streams.length > 0
+            ) {
+              remoteStreamRef.current = event.streams[0];
+              console.log("Initialized remote stream from event");
             }
+
+            if (remoteVideoRef.current) {
+              if (remoteStreamRef.current) {
+                console.log("Setting remote stream from ref");
+                remoteVideoRef.current.srcObject = remoteStreamRef.current;
+              } else if (event.streams && event.streams.length > 0) {
+                console.log("Setting remote stream from event.streams");
+                remoteStreamRef.current = event.streams[0];
+                remoteVideoRef.current.srcObject = remoteStreamRef.current;
+              } else {
+                console.log("Creating new MediaStream for remote tracks");
+                // Fallback: create new stream if not provided
+                const newRemoteStream = new MediaStream([event.track]);
+                remoteStreamRef.current = newRemoteStream;
+                remoteVideoRef.current.srcObject = newRemoteStream;
+              }
+
+              // Ensure video element is ready to play
+              if (remoteVideoRef.current.readyState >= 1) {
+                remoteVideoRef.current.play().catch((err) => {
+                  console.log("Play call initiated or already playing");
+                });
+              }
+            }
+
+            console.log(
+              "Remote stream now has",
+              remoteStreamRef.current?.getTracks().length,
+              "tracks"
+            );
+          } catch (e) {
+            console.error("Error in ontrack handler:", e);
           }
         };
 
@@ -277,6 +310,16 @@ function Cider() {
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = null;
     }
+
+    // Clear remote stream ref
+    if (remoteStreamRef.current) {
+      remoteStreamRef.current.getTracks().forEach((track) => track.stop());
+      remoteStreamRef.current = null;
+    }
+
+    // Clear ICE candidate queue and setup flag
+    iceCandidateQueueRef.current = [];
+    webrtcSetupInProgressRef.current = false;
   };
 
   const startChat = () => {
