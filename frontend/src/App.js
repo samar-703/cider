@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
-import io from 'socket.io-client';
-import { Video, VideoOff, Send, SkipForward, Power } from 'lucide-react';
+import React, { useState, useEffect, useRef } from "react";
+import io from "socket.io-client";
+import { Video, VideoOff, Send, SkipForward, Power } from "lucide-react";
 
-const SOCKET_URL = process.env.REACT_APP_BACKEND_URL || 'https://cider-j4xo.onrender.com';
+const SOCKET_URL =
+  process.env.REACT_APP_BACKEND_URL || "https://cider-j4xo.onrender.com";
 
-export default function Cider() {
+function Cider() {
   const [socket, setSocket] = useState(null);
-  const [status, setStatus] = useState('disconnected');
+  const [status, setStatus] = useState("disconnected");
   const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState('');
+  const [inputMessage, setInputMessage] = useState("");
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [partnerId, setPartnerId] = useState(null);
 
@@ -16,149 +17,278 @@ export default function Cider() {
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
-
-  const iceServers = {
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
-    ]
-  };
+  const webrtcSetupInProgressRef = useRef(false);
+  const iceCandidateQueueRef = useRef([]);
 
   useEffect(() => {
+    const iceServers = {
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+      ],
+    };
+
+    const setupWebRTC = async (socketInstance, isOfferer) => {
+      try {
+        // Prevent multiple simultaneous setup calls
+        if (webrtcSetupInProgressRef.current) {
+          console.log("WebRTC setup already in progress");
+          return;
+        }
+
+        webrtcSetupInProgressRef.current = true;
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+
+        localStreamRef.current = stream;
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+
+        const pc = new RTCPeerConnection(iceServers);
+        peerConnectionRef.current = pc;
+
+        // Set up event handlers BEFORE adding tracks
+        pc.ontrack = (event) => {
+          console.log("Remote track received:", event.track.kind);
+          console.log("Event streams length:", event.streams?.length);
+
+          if (remoteVideoRef.current) {
+            if (event.streams && event.streams.length > 0) {
+              console.log("Setting remote stream from event.streams");
+              remoteVideoRef.current.srcObject = event.streams[0];
+            } else {
+              console.log("Creating new MediaStream for remote tracks");
+              // Fallback: create new stream if not provided
+              const remoteStream = new MediaStream([event.track]);
+              remoteVideoRef.current.srcObject = remoteStream;
+            }
+          }
+        };
+
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            socketInstance.emit("ice-candidate", {
+              candidate: event.candidate,
+            });
+          }
+        };
+
+        pc.onconnectionstatechange = () => {
+          console.log("Connection state:", pc.connectionState);
+        };
+
+        pc.oniceconnectionstatechange = () => {
+          console.log("ICE connection state:", pc.iceConnectionState);
+        };
+
+        // Add tracks AFTER setting up handlers
+        stream.getTracks().forEach((track) => {
+          pc.addTrack(track, stream);
+        });
+
+        if (isOfferer) {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socketInstance.emit("offer", { offer });
+        }
+
+        webrtcSetupInProgressRef.current = false;
+      } catch (err) {
+        console.error("Error accessing media devices:", err);
+        webrtcSetupInProgressRef.current = false;
+        setMessages((prev) => [
+          ...prev,
+          { text: "Camera/microphone access denied", type: "system" },
+        ]);
+      }
+    };
+
     const newSocket = io(SOCKET_URL);
     setSocket(newSocket);
 
-    newSocket.on('connect', () => {
-      console.log('Connected to server');
+    newSocket.on("connect", () => {
+      console.log("Connected to server");
     });
 
-    newSocket.on('waiting', () => {
-      setStatus('waiting');
-      setMessages(prev => [...prev, { text: 'Looking for a stranger...', type: 'system' }]);
+    newSocket.on("waiting", () => {
+      setStatus("waiting");
+      setMessages((prev) => [
+        ...prev,
+        { text: "Looking for a stranger...", type: "system" },
+      ]);
     });
 
-    newSocket.on('partner-found', async ({ partnerId }) => {
-      setStatus('connected');
+    newSocket.on("partner-found", async ({ partnerId }) => {
+      setStatus("connected");
       setPartnerId(partnerId);
-      setMessages(prev => [...prev, { text: 'Stranger connected!', type: 'system' }]);
+      setMessages((prev) => [
+        ...prev,
+        { text: "Stranger connected!", type: "system" },
+      ]);
       await setupWebRTC(newSocket, true);
     });
 
-    newSocket.on('offer', async ({ offer, from }) => {
-      await setupWebRTC(newSocket, false);
-      const pc = peerConnectionRef.current;
-      if (pc) {
-        await pc.setRemoteDescription(new RTCSessionDescription(offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        newSocket.emit('answer', { answer });
-      }
-    });
+    newSocket.on("offer", async ({ offer, from }) => {
+      try {
+        console.log("Received offer from:", from);
 
-    newSocket.on('answer', async ({ answer }) => {
-      const pc = peerConnectionRef.current;
-      if (pc) {
-        await pc.setRemoteDescription(new RTCSessionDescription(answer));
-      }
-    });
-
-    newSocket.on('ice-candidate', async ({ candidate }) => {
-      const pc = peerConnectionRef.current;
-      if (pc && candidate) {
-        try {
-          await pc.addIceCandidate(new RTCIceCandidate(candidate));
-        } catch (e) {
-          console.error('Error adding ice candidate:', e);
+        // Only setup WebRTC if not already done (for the answerer)
+        if (!peerConnectionRef.current) {
+          console.log("Setting up WebRTC for answerer");
+          await setupWebRTC(newSocket, false);
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
+
+        const pc = peerConnectionRef.current;
+        console.log("Peer connection state:", pc?.signalingState);
+
+        if (pc && pc.signalingState === "stable") {
+          console.log("Setting remote description (offer)");
+          await pc.setRemoteDescription(new RTCSessionDescription(offer));
+          console.log("Creating answer");
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          console.log("Sending answer");
+          newSocket.emit("answer", { answer });
+
+          // Process buffered ICE candidates after setting remote description
+          console.log(
+            "Processing buffered ICE candidates:",
+            iceCandidateQueueRef.current.length
+          );
+          while (iceCandidateQueueRef.current.length > 0) {
+            const bufferedCandidate = iceCandidateQueueRef.current.shift();
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(bufferedCandidate));
+              console.log("Added buffered ICE candidate from offer");
+            } catch (e) {
+              console.error("Error adding buffered ICE candidate:", e);
+            }
+          }
+        } else {
+          console.log(
+            "Peer connection not in stable state, current state:",
+            pc?.signalingState
+          );
+        }
+      } catch (err) {
+        console.error("Error handling offer:", err);
       }
     });
 
-    newSocket.on('chat-message', ({ message, from }) => {
-      setMessages(prev => [...prev, { text: message, type: 'stranger' }]);
+    newSocket.on("answer", async ({ answer }) => {
+      try {
+        console.log("Received answer");
+        const pc = peerConnectionRef.current;
+        console.log("Peer connection state:", pc?.signalingState);
+
+        if (pc && pc.signalingState === "have-local-offer") {
+          console.log("Setting remote description (answer)");
+          await pc.setRemoteDescription(new RTCSessionDescription(answer));
+          console.log("Answer applied successfully");
+
+          // Process buffered ICE candidates
+          console.log(
+            "Processing buffered ICE candidates:",
+            iceCandidateQueueRef.current.length
+          );
+          while (iceCandidateQueueRef.current.length > 0) {
+            const bufferedCandidate = iceCandidateQueueRef.current.shift();
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(bufferedCandidate));
+              console.log("Added buffered ICE candidate");
+            } catch (e) {
+              console.error("Error adding buffered ICE candidate:", e);
+            }
+          }
+        } else {
+          console.log(
+            "Peer connection not in have-local-offer state, current state:",
+            pc?.signalingState
+          );
+        }
+      } catch (err) {
+        console.error("Error handling answer:", err);
+      }
     });
 
-    newSocket.on('partner-disconnected', () => {
+    newSocket.on("ice-candidate", async ({ candidate }) => {
+      const pc = peerConnectionRef.current;
+      if (!pc || !candidate) {
+        return;
+      }
+
+      try {
+        // Check if remote description is set
+        if (pc.remoteDescription) {
+          console.log("Adding ICE candidate immediately");
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } else {
+          // Buffer the candidate until remote description is set
+          console.log(
+            "Buffering ICE candidate - remote description not set yet"
+          );
+          iceCandidateQueueRef.current.push(candidate);
+        }
+      } catch (e) {
+        console.error("Error adding ice candidate:", e);
+      }
+    });
+
+    newSocket.on("chat-message", ({ message, from }) => {
+      setMessages((prev) => [...prev, { text: message, type: "stranger" }]);
+    });
+
+    newSocket.on("partner-disconnected", () => {
       handlePartnerDisconnect();
     });
 
+    const localStream = localStreamRef.current;
+    const peerConnection = peerConnectionRef.current;
+
     return () => {
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach(track => track.stop());
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop());
       }
-      if (peerConnectionRef.current) {
-        peerConnectionRef.current.close();
+      if (peerConnection) {
+        peerConnection.close();
       }
       newSocket.close();
     };
   }, []);
 
-  const setupWebRTC = async (socketInstance, isOfferer) => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true
-      });
-
-      localStreamRef.current = stream;
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
-
-      const pc = new RTCPeerConnection(iceServers);
-      peerConnectionRef.current = pc;
-
-      stream.getTracks().forEach(track => {
-        pc.addTrack(track, stream);
-      });
-
-      pc.ontrack = (event) => {
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = event.streams[0];
-        }
-      };
-
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          socketInstance.emit('ice-candidate', { candidate: event.candidate });
-        }
-      };
-
-      if (isOfferer) {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socketInstance.emit('offer', { offer });
-      }
-    } catch (err) {
-      console.error('Error accessing media devices:', err);
-      setMessages(prev => [...prev, { text: 'Camera/microphone access denied', type: 'system' }]);
-    }
-  };
-
   const handlePartnerDisconnect = () => {
-    setStatus('disconnected');
+    setStatus("disconnected");
     setPartnerId(null);
-    setMessages(prev => [...prev, { text: 'Stranger disconnected', type: 'system' }]);
-    
+    setMessages((prev) => [
+      ...prev,
+      { text: "Stranger disconnected", type: "system" },
+    ]);
+
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
-    
+
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = null;
     }
   };
 
   const startChat = () => {
-    if (socket && status === 'disconnected') {
+    if (socket && status === "disconnected") {
       setMessages([]);
-      socket.emit('find-partner');
+      socket.emit("find-partner");
     }
   };
 
   const nextChat = () => {
     if (socket) {
-      socket.emit('disconnect-chat');
+      socket.emit("disconnect-chat");
       handlePartnerDisconnect();
       setTimeout(() => startChat(), 500);
     }
@@ -166,16 +296,16 @@ export default function Cider() {
 
   const stopChat = () => {
     if (socket) {
-      socket.emit('disconnect-chat');
+      socket.emit("disconnect-chat");
       handlePartnerDisconnect();
     }
   };
 
   const sendMessage = () => {
-    if (inputMessage.trim() && socket && status === 'connected') {
-      socket.emit('chat-message', { message: inputMessage });
-      setMessages(prev => [...prev, { text: inputMessage, type: 'you' }]);
-      setInputMessage('');
+    if (inputMessage.trim() && socket && status === "connected") {
+      socket.emit("chat-message", { message: inputMessage });
+      setMessages((prev) => [...prev, { text: inputMessage, type: "you" }]);
+      setInputMessage("");
     }
   };
 
@@ -195,7 +325,7 @@ export default function Cider() {
         <h1 className="text-5xl font-semibold text-white text-center mb-8 mt-4">
           Cider
         </h1>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Video Section */}
           <div className="lg:col-span-2 space-y-4">
@@ -207,10 +337,12 @@ export default function Cider() {
                 playsInline
                 className="w-full h-full object-cover"
               />
-              {status !== 'connected' && (
+              {status !== "connected" && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
                   <p className="text-white text-xl">
-                    {status === 'waiting' ? 'Waiting for stranger...' : 'No one connected'}
+                    {status === "waiting"
+                      ? "Waiting for stranger..."
+                      : "No one connected"}
                   </p>
                 </div>
               )}
@@ -239,24 +371,28 @@ export default function Cider() {
             <div className="flex gap-3 justify-center">
               <button
                 onClick={startChat}
-                disabled={status !== 'disconnected'}
+                disabled={status !== "disconnected"}
                 className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition"
               >
                 <Power className="w-5 h-5" />
                 Start
               </button>
-              
+
               <button
                 onClick={toggleVideo}
                 className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
               >
-                {videoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-                {videoEnabled ? 'Disable' : 'Enable'} Video
+                {videoEnabled ? (
+                  <Video className="w-5 h-5" />
+                ) : (
+                  <VideoOff className="w-5 h-5" />
+                )}
+                {videoEnabled ? "Disable" : "Enable"} Video
               </button>
 
               <button
                 onClick={nextChat}
-                disabled={status !== 'connected'}
+                disabled={status !== "connected"}
                 className="flex items-center gap-2 px-6 py-3 bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition"
               >
                 <SkipForward className="w-5 h-5" />
@@ -265,7 +401,7 @@ export default function Cider() {
 
               <button
                 onClick={stopChat}
-                disabled={status === 'disconnected'}
+                disabled={status === "disconnected"}
                 className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition"
               >
                 <Power className="w-5 h-5" />
@@ -277,23 +413,23 @@ export default function Cider() {
           {/* Chat Section */}
           <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 flex flex-col h-[600px]">
             <h2 className="text-2xl font-bold text-white mb-4">Chat</h2>
-            
+
             {/* Messages */}
             <div className="flex-1 overflow-y-auto space-y-2 mb-4 scrollbar-thin">
               {messages.map((msg, idx) => (
                 <div
                   key={idx}
                   className={`p-3 rounded-lg ${
-                    msg.type === 'system'
-                      ? 'bg-gray-700 text-gray-300 text-center text-sm'
-                      : msg.type === 'you'
-                      ? 'bg-blue-600 text-white ml-auto max-w-[80%]'
-                      : 'bg-gray-600 text-white mr-auto max-w-[80%]'
+                    msg.type === "system"
+                      ? "bg-gray-700 text-gray-300 text-center text-sm"
+                      : msg.type === "you"
+                      ? "bg-blue-600 text-white ml-auto max-w-[80%]"
+                      : "bg-gray-600 text-white mr-auto max-w-[80%]"
                   }`}
                 >
-                  {msg.type !== 'system' && (
+                  {msg.type !== "system" && (
                     <div className="text-xs opacity-75 mb-1">
-                      {msg.type === 'you' ? 'You' : 'Stranger'}
+                      {msg.type === "you" ? "You" : "Stranger"}
                     </div>
                   )}
                   {msg.text}
@@ -307,14 +443,14 @@ export default function Cider() {
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                 placeholder="Type a message..."
-                disabled={status !== 'connected'}
+                disabled={status !== "connected"}
                 className="flex-1 px-4 py-2 bg-white/20 text-white placeholder-white/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               />
               <button
                 onClick={sendMessage}
-                disabled={status !== 'connected' || !inputMessage.trim()}
+                disabled={status !== "connected" || !inputMessage.trim()}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition"
               >
                 <Send className="w-5 h-5" />
@@ -326,3 +462,5 @@ export default function Cider() {
     </div>
   );
 }
+
+export default Cider;

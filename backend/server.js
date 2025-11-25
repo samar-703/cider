@@ -8,15 +8,20 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
   cors: {
-    origin: ["http://localhost:3001",
-       "https://cider-gamma.vercel.app"
+    origin: ["https://cider-gamma.vercel.app", "http://localhost:3000"
     ],
     methods: ["GET", "POST"]
   }
 });
 
+io.on('connection', (socket) => {
+  console.log("a user connected.");
+  
+});
+
 app.use(cors());
 app.use(express.json());
+
 
 let waitingUsers = [];
 let activeConnections = new Map();
