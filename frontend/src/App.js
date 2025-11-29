@@ -373,25 +373,6 @@ function Cider() {
           {/* Video Section */}
           <div className="lg:col-span-2 flex flex-col gap-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Remote Video */}
-              <div className="bg-zinc-900 rounded-lg overflow-hidden aspect-video relative border border-zinc-800">
-                <video
-                  ref={remoteVideoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-cover"
-                />
-                {status !== "connected" && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
-                    <p className="text-zinc-400 text-xl">
-                      {status === "waiting"
-                        ? "Waiting for stranger..."
-                        : "No one connected"}
-                    </p>
-                  </div>
-                )}
-              </div>
-
               {/* Local Video */}
               <div className="bg-zinc-900 rounded-lg overflow-hidden aspect-video relative border border-zinc-800">
                 <video
@@ -409,6 +390,25 @@ function Cider() {
                 <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
                   <span className="text-white text-sm">You</span>
                 </div>
+              </div>
+
+              {/* Remote Video */}
+              <div className="bg-zinc-900 rounded-lg overflow-hidden aspect-video relative border border-zinc-800">
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                {status !== "connected" && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
+                    <p className="text-zinc-400 text-xl">
+                      {status === "waiting"
+                        ? "Waiting for stranger..."
+                        : "No one connected"}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
