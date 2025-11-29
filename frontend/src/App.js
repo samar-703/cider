@@ -363,7 +363,7 @@ function Cider() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 p-4">
+    <div className="min-h-screen bg-black p-4">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-5xl font-semibold text-white text-center mb-8 mt-4">
           Cider
@@ -371,51 +371,53 @@ function Cider() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Video Section */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Remote Video */}
-            <div className="bg-black rounded-lg overflow-hidden aspect-video relative">
-              <video
-                ref={remoteVideoRef}
-                autoPlay
-                playsInline
-                className="w-full h-full object-cover"
-              />
-              {status !== "connected" && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-                  <p className="text-white text-xl">
-                    {status === "waiting"
-                      ? "Waiting for stranger..."
-                      : "No one connected"}
-                  </p>
-                </div>
-              )}
-            </div>
+          <div className="lg:col-span-2 flex flex-col gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Remote Video */}
+              <div className="bg-zinc-900 rounded-lg overflow-hidden aspect-video relative border border-zinc-800">
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                {status !== "connected" && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
+                    <p className="text-zinc-400 text-xl">
+                      {status === "waiting"
+                        ? "Waiting for stranger..."
+                        : "No one connected"}
+                    </p>
+                  </div>
+                )}
+              </div>
 
-            {/* Local Video */}
-            <div className="bg-black rounded-lg overflow-hidden aspect-video relative">
-              <video
-                ref={localVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover"
-              />
-              {!videoEnabled && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
-                  <VideoOff className="w-16 h-16 text-white" />
+              {/* Local Video */}
+              <div className="bg-zinc-900 rounded-lg overflow-hidden aspect-video relative border border-zinc-800">
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                />
+                {!videoEnabled && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-800">
+                    <VideoOff className="w-16 h-16 text-zinc-500" />
+                  </div>
+                )}
+                <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+                  <span className="text-white text-sm">You</span>
                 </div>
-              )}
-              <div className="absolute bottom-4 left-4 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
-                <span className="text-white text-sm">You</span>
               </div>
             </div>
 
             {/* Controls */}
-            <div className="flex gap-3 justify-center">
+            <div className="flex gap-3 justify-center mt-2">
               <button
                 onClick={startChat}
                 disabled={status !== "disconnected"}
-                className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition"
+                className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-green-600 text-green-500 hover:bg-green-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-bold transition-all duration-200"
               >
                 <Power className="w-5 h-5" />
                 Start
@@ -423,20 +425,20 @@ function Cider() {
 
               <button
                 onClick={toggleVideo}
-                className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
+                className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-blue-600 text-blue-500 hover:bg-blue-900/20 rounded-lg font-bold transition-all duration-200"
               >
                 {videoEnabled ? (
                   <Video className="w-5 h-5" />
                 ) : (
                   <VideoOff className="w-5 h-5" />
                 )}
-                {videoEnabled ? "Disable" : "Enable"} Video
+                {videoEnabled ? "Disable" : "Enable"}
               </button>
 
               <button
                 onClick={nextChat}
                 disabled={status !== "connected"}
-                className="flex items-center gap-2 px-6 py-3 bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition"
+                className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-yellow-600 text-yellow-500 hover:bg-yellow-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-bold transition-all duration-200"
               >
                 <SkipForward className="w-5 h-5" />
                 Next
@@ -445,7 +447,7 @@ function Cider() {
               <button
                 onClick={stopChat}
                 disabled={status === "disconnected"}
-                className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition"
+                className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-red-600 text-red-500 hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-bold transition-all duration-200"
               >
                 <Power className="w-5 h-5" />
                 Stop
@@ -454,7 +456,7 @@ function Cider() {
           </div>
 
           {/* Chat Section */}
-          <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 flex flex-col h-[600px]">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex flex-col h-[600px]">
             <h2 className="text-2xl font-bold text-white mb-4">Chat</h2>
 
             {/* Messages */}
@@ -464,10 +466,10 @@ function Cider() {
                   key={idx}
                   className={`p-3 rounded-lg ${
                     msg.type === "system"
-                      ? "bg-gray-700 text-gray-300 text-center text-sm"
+                      ? "bg-zinc-800 text-zinc-400 text-center text-sm"
                       : msg.type === "you"
-                      ? "bg-blue-600 text-white ml-auto max-w-[80%]"
-                      : "bg-gray-600 text-white mr-auto max-w-[80%]"
+                      ? "bg-blue-900/30 border border-blue-800 text-blue-100 ml-auto max-w-[80%]"
+                      : "bg-zinc-800 text-zinc-200 mr-auto max-w-[80%]"
                   }`}
                 >
                   {msg.type !== "system" && (
@@ -489,12 +491,12 @@ function Cider() {
                 onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                 placeholder="Type a message..."
                 disabled={status !== "connected"}
-                className="flex-1 px-4 py-2 bg-white/20 text-white placeholder-white/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:opacity-50"
               />
               <button
                 onClick={sendMessage}
                 disabled={status !== "connected" || !inputMessage.trim()}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition"
+                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 disabled:cursor-not-allowed text-white rounded-lg transition border border-zinc-700"
               >
                 <Send className="w-5 h-5" />
               </button>
