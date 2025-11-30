@@ -386,8 +386,7 @@ function Cider() {
           </div>
           
           <div className="max-w-7xl mx-auto" style={{ position: 'relative', zIndex: 1 }}>
-            <h1 className="text-5xl font-semibold text-white text-center mb-8 mt-4">
-              Cider
+            <h1 className="text-5xl font-semibold text-white text-center mb-8 mt-2">
             </h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
