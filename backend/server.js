@@ -36,10 +36,12 @@ io.on('connection', (socket) => {
       activeConnections.set(socket.id, partner.id);
       activeConnections.set(partner.id, socket.id);
 
-      socket.emit('partner-found', { partnerId: partner.id });
-      partner.emit('partner-found', { partnerId: socket.id });
+      // The NEW connection (socket) will be the offerer
+      // The WAITING partner will be the answerer
+      socket.emit('partner-found', { partnerId: partner.id, isOfferer: true });
+      partner.emit('partner-found', { partnerId: socket.id, isOfferer: false });
       
-      console.log(`Matched ${socket.id} with ${partner.id}`);
+      console.log(`Matched ${socket.id} (offerer) with ${partner.id} (answerer)`);
     } else {
       waitingUsers.push(socket);
       socket.emit('waiting');

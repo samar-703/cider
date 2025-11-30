@@ -148,14 +148,16 @@ function Cider() {
       ]);
     });
 
-    newSocket.on("partner-found", async ({ partnerId }) => {
+    newSocket.on("partner-found", async ({ partnerId, isOfferer }) => {
+      console.log(`🎯 Partner found! Partner ID: ${partnerId}, I am ${isOfferer ? 'OFFERER' : 'ANSWERER'}`);
       setStatus("connected");
       setPartnerId(partnerId);
       setMessages((prev) => [
         ...prev,
         { text: "Stranger connected!", type: "system" },
       ]);
-      await setupWebRTC(newSocket, true);
+      // Setup WebRTC with the role assigned by the server
+      await setupWebRTC(newSocket, isOfferer);
     });
 
     newSocket.on("offer", async ({ offer, from }) => {
