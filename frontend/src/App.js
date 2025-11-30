@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import { Video, VideoOff, Send, SkipForward, Power } from "lucide-react";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import Particles from "./Particles";
+import LandingPage from "./LandingPage";
+import Navbar from "./Navbar";
 
 const SOCKET_URL =
   process.env.REACT_APP_BACKEND_URL || "https://cider-j4xo.onrender.com";
@@ -357,29 +360,40 @@ function Cider() {
   };
 
   return (
-    <div className="min-h-screen bg-black p-4" style={{ position: 'relative' }}>
-      <div style={{ width: '100%', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 0 }}>
-        <Particles
-          particleColors={['#ffffff', '#ffffff', '#ffffff']}
-          particleCount={200}
-          particleSpread={10}
-          speed={0.1}
-          particleBaseSize={100}
-          moveParticlesOnHover={true}
-          alphaParticles={false}
-          disableRotation={false}
-        />
-      </div>
-      
-      <div className="max-w-7xl mx-auto" style={{ position: 'relative', zIndex: 1 }}>
-        <h1 className="text-5xl font-semibold text-white text-center mb-8 mt-4">
-          Cider
-        </h1>
+    <>
+      {/* Navbar - always visible */}
+      <Navbar />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Video Section */}
-          <div className="lg:col-span-2 flex flex-col gap-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Show Landing Page for non-authenticated users */}
+      <SignedOut>
+        <LandingPage />
+      </SignedOut>
+
+      {/* Show Video Chat for authenticated users */}
+      <SignedIn>
+        <div className="min-h-screen bg-black p-4 pt-20" style={{ position: 'relative' }}>
+          <div style={{ width: '100%', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 0 }}>
+            <Particles
+              particleColors={['#ffffff', '#ffffff', '#ffffff']}
+              particleCount={200}
+              particleSpread={10}
+              speed={0.1}
+              particleBaseSize={100}
+              moveParticlesOnHover={true}
+              alphaParticles={false}
+              disableRotation={false}
+            />
+          </div>
+          
+          <div className="max-w-7xl mx-auto" style={{ position: 'relative', zIndex: 1 }}>
+            <h1 className="text-5xl font-semibold text-white text-center mb-8 mt-4">
+              Cider
+            </h1>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Video Section */}
+              <div className="lg:col-span-2 flex flex-col gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Local Video */}
               <div className="bg-zinc-900 rounded-lg overflow-hidden aspect-video relative border border-zinc-800">
                 <video
@@ -519,10 +533,12 @@ function Cider() {
                 <Send className="w-5 h-5" />
               </button>
             </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </SignedIn>
+    </>
   );
 }
 
