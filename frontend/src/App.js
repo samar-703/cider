@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import { Video, VideoOff, Send, SkipForward, Power } from "lucide-react";
+import Particles from "./Particles";
 
 const SOCKET_URL =
   process.env.REACT_APP_BACKEND_URL || "https://cider-j4xo.onrender.com";
@@ -54,51 +55,43 @@ function Cider() {
 
         // Set up event handlers BEFORE adding tracks
         pc.ontrack = (event) => {
-          console.log("Remote track received:", event.track.kind);
-          console.log("Event streams length:", event.streams?.length);
+          console.log("🎥 Remote track received:", event.track.kind);
+          console.log("📦 Event streams:", event.streams?.length);
 
           try {
-            // Initialize remote stream if not already done
-            if (
-              !remoteStreamRef.current &&
-              event.streams &&
-              event.streams.length > 0
-            ) {
+            // Use the stream from the event if available, otherwise create/update our own
+            if (event.streams && event.streams.length > 0) {
+              // Use the stream provided by the peer
+              console.log("✅ Using stream from event");
               remoteStreamRef.current = event.streams[0];
-              console.log("Initialized remote stream from event");
+            } else {
+              // Create or update our own MediaStream
+              console.log("🔧 Creating/updating MediaStream manually");
+              if (!remoteStreamRef.current) {
+                remoteStreamRef.current = new MediaStream();
+              }
+              remoteStreamRef.current.addTrack(event.track);
             }
 
+            // Set the stream to the video element
             if (remoteVideoRef.current) {
-              if (remoteStreamRef.current) {
-                console.log("Setting remote stream from ref");
-                remoteVideoRef.current.srcObject = remoteStreamRef.current;
-              } else if (event.streams && event.streams.length > 0) {
-                console.log("Setting remote stream from event.streams");
-                remoteStreamRef.current = event.streams[0];
-                remoteVideoRef.current.srcObject = remoteStreamRef.current;
-              } else {
-                console.log("Creating new MediaStream for remote tracks");
-                // Fallback: create new stream if not provided
-                const newRemoteStream = new MediaStream([event.track]);
-                remoteStreamRef.current = newRemoteStream;
-                remoteVideoRef.current.srcObject = newRemoteStream;
-              }
-
-              // Ensure video element is ready to play
-              if (remoteVideoRef.current.readyState >= 1) {
-                remoteVideoRef.current.play().catch((err) => {
-                  console.log("Play call initiated or already playing");
-                });
-              }
+              console.log("🎬 Setting srcObject to remote video element");
+              remoteVideoRef.current.srcObject = remoteStreamRef.current;
+              
+              // Try to play the video
+              remoteVideoRef.current.play().catch((err) => {
+                console.warn("⚠️ Video play error (may auto-resolve):", err.message);
+              });
+              
+              console.log(
+                "📊 Remote stream tracks:",
+                remoteStreamRef.current.getTracks().map(t => t.kind)
+              );
+            } else {
+              console.error("❌ Remote video element not found!");
             }
-
-            console.log(
-              "Remote stream now has",
-              remoteStreamRef.current?.getTracks().length,
-              "tracks"
-            );
           } catch (e) {
-            console.error("Error in ontrack handler:", e);
+            console.error("💥 Error in ontrack handler:", e);
           }
         };
 
@@ -311,7 +304,6 @@ function Cider() {
       remoteVideoRef.current.srcObject = null;
     }
 
-    // Clear remote stream ref
     if (remoteStreamRef.current) {
       remoteStreamRef.current.getTracks().forEach((track) => track.stop());
       remoteStreamRef.current = null;
@@ -363,8 +355,21 @@ function Cider() {
   };
 
   return (
-    <div className="min-h-screen bg-black p-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-black p-4" style={{ position: 'relative' }}>
+      <div style={{ width: '100%', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 0 }}>
+        <Particles
+          particleColors={['#ffffff', '#ffffff', '#ffffff']}
+          particleCount={200}
+          particleSpread={10}
+          speed={0.1}
+          particleBaseSize={100}
+          moveParticlesOnHover={true}
+          alphaParticles={false}
+          disableRotation={false}
+        />
+      </div>
+      
+      <div className="max-w-7xl mx-auto" style={{ position: 'relative', zIndex: 1 }}>
         <h1 className="text-5xl font-semibold text-white text-center mb-8 mt-4">
           Cider
         </h1>
@@ -399,6 +404,12 @@ function Cider() {
                   autoPlay
                   playsInline
                   className="w-full h-full object-cover"
+                  onLoadedMetadata={(e) => {
+                    console.log("🎬 Remote video metadata loaded, attempting play");
+                    e.target.play().catch(err => {
+                      console.error("❌ Remote video play failed:", err);
+                    });
+                  }}
                 />
                 {status !== "connected" && (
                   <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
@@ -407,6 +418,11 @@ function Cider() {
                         ? "Waiting for stranger..."
                         : "No one connected"}
                     </p>
+                  </div>
+                )}
+                {status === "connected" && (
+                  <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+                    <span className="text-white text-sm">Stranger</span>
                   </div>
                 )}
               </div>
