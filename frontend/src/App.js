@@ -6,8 +6,8 @@ import Particles from "./Particles";
 import LandingPage from "./LandingPage";
 import Navbar from "./Navbar";
 
-const SOCKET_URL =
-  process.env.REACT_APP_BACKEND_URL || "https://cider-j4xo.onrender.com";
+// Backend URL is public, so it's safe to hardcode
+const SOCKET_URL = "https://omegle-clone-backend.onrender.com";
 
 function Cider() {
   const [socket, setSocket] = useState(null);
@@ -254,12 +254,10 @@ function Cider() {
       }
 
       try {
-        // Check if remote description is set
         if (pc.remoteDescription) {
           console.log("Adding ICE candidate immediately");
           await pc.addIceCandidate(new RTCIceCandidate(candidate));
         } else {
-          // Buffer the candidate until remote description is set
           console.log(
             "Buffering ICE candidate - remote description not set yet"
           );

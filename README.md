@@ -56,6 +56,8 @@ Before running this application, make sure you have:
 
 ## 🚀 Getting Started
 
+> **⚠️ SECURITY NOTE**: The backend URL is hardcoded since it's public anyway. Only keep actual secrets (like API secret keys, database passwords) in `.env` files and never commit them to Git!
+
 ### 1. Clone the Repository
 
 ```bash
@@ -95,12 +97,15 @@ cd frontend
 npm install
 ```
 
-Create a `.env` file in the `frontend` directory and add your Clerk publishable key:
+The backend URL is hardcoded in the app. You only need to set up Clerk authentication.
+
+If you want to use Clerk (optional for local development), create a `.env.local` file in the `frontend` directory:
 
 ```env
 REACT_APP_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key_here
-REACT_APP_BACKEND_URL=http://localhost:5000
 ```
+
+> **Note**: The app will work without Clerk for testing, but authentication features will be disabled.
 
 Start the frontend development server:
 
@@ -112,12 +117,13 @@ The application will open at `http://localhost:3000`.
 
 ### 4. Environment Variables
 
-#### Frontend (.env)
-- `REACT_APP_CLERK_PUBLISHABLE_KEY` - Your Clerk publishable key
-- `REACT_APP_BACKEND_URL` - Backend server URL (default: http://localhost:5000)
+#### Frontend (.env.local) - Optional
+- `REACT_APP_CLERK_PUBLISHABLE_KEY` - Your Clerk publishable key (optional for local testing)
 
 #### Backend
 - `PORT` - Server port (default: 5000)
+
+> **Note**: The backend URL is hardcoded in the frontend. To change it, edit the `SOCKET_URL` constant in `src/App.js`.
 
 ## 🎮 How to Use
 
@@ -208,10 +214,10 @@ omegle-clone/
 1. Push your code to GitHub
 2. Import project to Vercel
 3. Set root directory to `frontend`
-4. Add environment variables:
+4. (Optional) Add environment variable for Clerk:
    - `REACT_APP_CLERK_PUBLISHABLE_KEY`
-   - `REACT_APP_BACKEND_URL` (your deployed backend URL)
-5. Deploy
+5. If your backend URL changes, update the `SOCKET_URL` in `src/App.js`
+6. Deploy
 
 ## 🔒 Security & Privacy
 
