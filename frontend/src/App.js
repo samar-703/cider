@@ -7,7 +7,7 @@ import LandingPage from "./LandingPage";
 import Navbar from "./Navbar";
 
 // Backend URL is public, so it's safe to hardcode
-const SOCKET_URL = "https://omegle-clone-backend.onrender.com";
+const SOCKET_URL = "https://cider-j4xo.onrender.com";
 
 function Cider() {
   const [socket, setSocket] = useState(null);
