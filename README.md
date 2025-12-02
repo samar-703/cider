@@ -30,19 +30,32 @@ A modern, real-time video chat application that connects strangers for random vi
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React 19** - UI framework
-- **Socket.IO Client** - Real-time communication
-- **WebRTC** - Peer-to-peer video/audio streaming
-- **Clerk** - User authentication
-- **Tailwind CSS** - Styling
-- **Lucide React** - Icons
-- **OGL** - Particle effects
+| Technology | Version | Description |
+|------------|---------|-------------|
+| **React** | 19.2.0 | Modern UI framework with hooks and functional components |
+| **Socket.IO Client** | 4.8.1 | Real-time bidirectional event-based communication |
+| **WebRTC** | Native | Peer-to-peer video/audio streaming (browser API) |
+| **Clerk** | 5.57.0 | Secure user authentication and session management |
+| **Tailwind CSS** | 3.4.18 | Utility-first CSS framework for rapid styling |
+| **Lucide React** | 0.554.0 | Beautiful & consistent icon library |
+| **OGL** | 1.0.11 | Minimal WebGL framework for particle effects |
+| **PostCSS** | 8.5.6 | CSS transformations and autoprefixing |
 
 ### Backend
-- **Node.js** - Runtime environment
-- **Express** - Web server framework
-- **Socket.IO** - WebSocket server for signaling
-- **CORS** - Cross-origin resource sharing
+| Technology | Version | Description |
+|------------|---------|-------------|
+| **Node.js** | 14+ | JavaScript runtime environment |
+| **Express** | 4.18.2 | Fast, minimalist web server framework |
+| **Socket.IO** | 4.6.1 | WebSocket server for real-time signaling |
+| **CORS** | 2.8.5 | Cross-origin resource sharing middleware |
+| **Nodemon** | 3.0.1 | Development auto-reload (dev dependency) |
+
+### WebRTC Infrastructure
+| Component | Description |
+|-----------|-------------|
+| **STUN Servers** | Google's public STUN servers for NAT traversal |
+| **ICE Framework** | Interactive Connectivity Establishment for peer discovery |
+| **SDP** | Session Description Protocol for media negotiation |
 
 ## 📋 Prerequisites
 
