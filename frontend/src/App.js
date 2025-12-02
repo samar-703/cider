@@ -58,8 +58,8 @@ function Cider() {
 
         // Set up event handlers BEFORE adding tracks
         pc.ontrack = (event) => {
-          console.log("🎥 Remote track received:", event.track.kind);
-          console.log("📦 Event streams:", event.streams?.length);
+          console.log("Remote track received:", event.track.kind);
+          console.log("Event streams:", event.streams?.length);
 
           try {
             // Use the stream from the event if available, otherwise create/update our own
@@ -78,23 +78,23 @@ function Cider() {
 
             // Set the stream to the video element
             if (remoteVideoRef.current) {
-              console.log("🎬 Setting srcObject to remote video element");
+              console.log("Setting srcObject to remote video element");
               remoteVideoRef.current.srcObject = remoteStreamRef.current;
               
               // Try to play the video
               remoteVideoRef.current.play().catch((err) => {
-                console.warn("⚠️ Video play error (may auto-resolve):", err.message);
+                console.warn("Video play error (may auto-resolve):", err.message);
               });
               
               console.log(
-                "📊 Remote stream tracks:",
+                "Remote stream tracks:",
                 remoteStreamRef.current.getTracks().map(t => t.kind)
               );
             } else {
-              console.error("❌ Remote video element not found!");
+              console.error("Remote video element not found!");
             }
           } catch (e) {
-            console.error("💥 Error in ontrack handler:", e);
+            console.error("Error in ontrack handler:", e);
           }
         };
 
