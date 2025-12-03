@@ -130,10 +130,14 @@ function Cider() {
 
     // Add local tracks to peer connection
     if (localStreamRef.current) {
-      console.log("➕ Adding local tracks to peer connection");
-      localStreamRef.current.getTracks().forEach((track) => {
-        pc.addTrack(track, localStreamRef.current);
+      const tracks = localStreamRef.current.getTracks();
+      console.log("➕ Adding local tracks to peer connection:", tracks.map(t => `${t.kind} (${t.id.slice(0,8)})`));
+      tracks.forEach((track) => {
+        const sender = pc.addTrack(track, localStreamRef.current);
+        console.log(`   ✅ Added ${track.kind} track, sender:`, sender ? 'OK' : 'FAILED');
       });
+    } else {
+      console.error("❌ No local stream available to add tracks!");
     }
 
     return pc;
@@ -230,15 +234,17 @@ function Cider() {
       ]);
 
       try {
-        // Get local media first
+        // BOTH offerer and answerer need to set up their peer connection
+        console.log("📹 Getting local media stream");
         await getLocalStream();
         
-        // Create peer connection
+        console.log("🔧 Creating peer connection with local tracks");
         const pc = createPeerConnection(newSocket);
 
         // Only the offerer creates and sends the offer
         if (isOfferer) {
-          console.log("📤 Creating offer (I am offerer)");
+          console.log("📤 I am OFFERER - creating and sending offer");
+          console.log("📊 My senders before offer:", pc.getSenders().length);
           makingOfferRef.current = true;
           
           const offer = await pc.createOffer({
@@ -247,10 +253,16 @@ function Cider() {
           });
           
           await pc.setLocalDescription(offer);
-          console.log("📤 Sending offer");
+          console.log("📤 Sending offer to answerer");
+          console.log("📊 Offer SDP includes:", {
+            audio: offer.sdp.includes('m=audio'),
+            video: offer.sdp.includes('m=video')
+          });
           newSocket.emit("offer", { offer: pc.localDescription });
           
           makingOfferRef.current = false;
+        } else {
+          console.log("📥 I am ANSWERER - waiting for offer from offerer");
         }
       } catch (err) {
         console.error("❌ Error in partner-found handler:", err);
@@ -259,17 +271,26 @@ function Cider() {
 
     newSocket.on("offer", async ({ offer, from }) => {
       console.log("📥 Received offer from:", from);
+      console.log("📊 Offer SDP includes:", {
+        audio: offer.sdp?.includes('m=audio'),
+        video: offer.sdp?.includes('m=video')
+      });
       
       try {
         const pc = peerConnectionRef.current;
         
         if (!pc) {
-          console.log("⚠️ No peer connection, getting stream first");
+          console.error("❌ No peer connection exists! This should not happen.");
+          console.log("⚠️ Creating emergency peer connection");
           await getLocalStream();
           createPeerConnection(newSocket);
         }
 
         const currentPc = peerConnectionRef.current;
+        
+        console.log(`📊 Peer connection state: ${currentPc.signalingState}`);
+        console.log(`📊 Local tracks (senders): ${currentPc.getSenders().length}`);
+        console.log(`📊 Senders details:`, currentPc.getSenders().map(s => s.track?.kind));
         
         // Handle glare (both sides trying to negotiate)
         const offerCollision = makingOfferRef.current || currentPc.signalingState !== "stable";
@@ -287,9 +308,14 @@ function Cider() {
         
         console.log("📤 Creating answer");
         const answer = await currentPc.createAnswer();
+        console.log("📊 Answer SDP includes:", {
+          audio: answer.sdp.includes('m=audio'),
+          video: answer.sdp.includes('m=video')
+        });
         await currentPc.setLocalDescription(answer);
         
-        console.log("📤 Sending answer");
+        console.log("📤 Sending answer to offerer");
+        console.log("📊 Transceivers after answer:", currentPc.getTransceivers().map(t => `${t.mid}: ${t.direction}`));
         newSocket.emit("answer", { answer: currentPc.localDescription });
         
       } catch (err) {
@@ -299,17 +325,22 @@ function Cider() {
 
     newSocket.on("answer", async ({ answer }) => {
       console.log("📥 Received answer");
+      console.log("📊 Answer SDP includes:", {
+        audio: answer.sdp?.includes('m=audio'),
+        video: answer.sdp?.includes('m=video')
+      });
       
       try {
         const pc = peerConnectionRef.current;
         
         if (!pc) {
-          console.log("⚠️ No peer connection when receiving answer");
+          console.error("❌ No peer connection when receiving answer");
           return;
         }
 
+        console.log("📊 Current signaling state:", pc.signalingState);
         if (pc.signalingState !== "have-local-offer") {
-          console.log("⚠️ Not in have-local-offer state, ignoring answer");
+          console.error("❌ Not in have-local-offer state, current state:", pc.signalingState);
           return;
         }
 
@@ -320,6 +351,7 @@ function Cider() {
         await processIceCandidateQueue();
         
         console.log("✅ Answer applied successfully");
+        console.log("📊 Transceivers:", pc.getTransceivers().map(t => `${t.mid}: ${t.direction}`));
       } catch (err) {
         console.error("❌ Error handling answer:", err);
       }
