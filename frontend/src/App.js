@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import io from "socket.io-client";
 import { Video, VideoOff, Send, SkipForward, Power } from "lucide-react";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
@@ -6,8 +6,35 @@ import Particles from "./Particles";
 import LandingPage from "./LandingPage";
 import Navbar from "./Navbar";
 
-// Backend URL is public, so it's safe to hardcode
 const SOCKET_URL = "https://cider-j4xo.onrender.com";
+
+// ICE servers configuration with TURN servers for reliable connectivity
+const ICE_SERVERS = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
+    { urls: "stun:stun3.l.google.com:19302" },
+    { urls: "stun:stun4.l.google.com:19302" },
+    // Free TURN servers for reliability
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+  ],
+  iceCandidatePoolSize: 10,
+};
 
 function Cider() {
   const [socket, setSocket] = useState(null);
@@ -21,284 +48,21 @@ function Cider() {
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
-  const remoteStreamRef = useRef(null);
-  const webrtcSetupInProgressRef = useRef(false);
+  const socketRef = useRef(null);
   const iceCandidateQueueRef = useRef([]);
+  const isNegotiatingRef = useRef(false);
+  const makingOfferRef = useRef(false);
 
-  useEffect(() => {
-    const iceServers = {
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" },
-      ],
-    };
-
-    const setupWebRTC = async (socketInstance, isOfferer) => {
-      try {
-        // Prevent multiple simultaneous setup calls
-        if (webrtcSetupInProgressRef.current) {
-          console.log("WebRTC setup already in progress");
-          return;
-        }
-
-        webrtcSetupInProgressRef.current = true;
-
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
-
-        localStreamRef.current = stream;
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-
-        const pc = new RTCPeerConnection(iceServers);
-        peerConnectionRef.current = pc;
-
-        // Set up event handlers BEFORE adding tracks
-        pc.ontrack = (event) => {
-          console.log("Remote track received:", event.track.kind);
-          console.log("Event streams:", event.streams?.length);
-
-          try {
-            // Use the stream from the event if available, otherwise create/update our own
-            if (event.streams && event.streams.length > 0) {
-              // Use the stream provided by the peer
-              console.log("✅ Using stream from event");
-              remoteStreamRef.current = event.streams[0];
-            } else {
-              // Create or update our own MediaStream
-              console.log("🔧 Creating/updating MediaStream manually");
-              if (!remoteStreamRef.current) {
-                remoteStreamRef.current = new MediaStream();
-              }
-              remoteStreamRef.current.addTrack(event.track);
-            }
-
-            // Set the stream to the video element
-            if (remoteVideoRef.current) {
-              console.log("Setting srcObject to remote video element");
-              remoteVideoRef.current.srcObject = remoteStreamRef.current;
-              
-              // Try to play the video
-              remoteVideoRef.current.play().catch((err) => {
-                console.warn("Video play error (may auto-resolve):", err.message);
-              });
-              
-              console.log(
-                "Remote stream tracks:",
-                remoteStreamRef.current.getTracks().map(t => t.kind)
-              );
-            } else {
-              console.error("Remote video element not found!");
-            }
-          } catch (e) {
-            console.error("Error in ontrack handler:", e);
-          }
-        };
-
-        pc.onicecandidate = (event) => {
-          if (event.candidate) {
-            socketInstance.emit("ice-candidate", {
-              candidate: event.candidate,
-            });
-          }
-        };
-
-        pc.onconnectionstatechange = () => {
-          console.log("Connection state:", pc.connectionState);
-        };
-
-        pc.oniceconnectionstatechange = () => {
-          console.log("ICE connection state:", pc.iceConnectionState);
-        };
-
-        // Add tracks AFTER setting up handlers
-        stream.getTracks().forEach((track) => {
-          pc.addTrack(track, stream);
-        });
-
-        if (isOfferer) {
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          socketInstance.emit("offer", { offer });
-        }
-
-        webrtcSetupInProgressRef.current = false;
-      } catch (err) {
-        console.error("Error accessing media devices:", err);
-        webrtcSetupInProgressRef.current = false;
-        setMessages((prev) => [
-          ...prev,
-          { text: "Camera/microphone access denied", type: "system" },
-        ]);
-      }
-    };
-
-    const newSocket = io(SOCKET_URL);
-    setSocket(newSocket);
-
-    newSocket.on("connect", () => {
-      console.log("Connected to server");
-    });
-
-    newSocket.on("waiting", () => {
-      setStatus("waiting");
-      setMessages((prev) => [
-        ...prev,
-        { text: "Looking for a stranger...", type: "system" },
-      ]);
-    });
-
-    newSocket.on("partner-found", async ({ partnerId, isOfferer }) => {
-      console.log(`🎯 Partner found! Partner ID: ${partnerId}, I am ${isOfferer ? 'OFFERER' : 'ANSWERER'}`);
-      setStatus("connected");
-      setPartnerId(partnerId);
-      setMessages((prev) => [
-        ...prev,
-        { text: "Stranger connected!", type: "system" },
-      ]);
-      // Setup WebRTC with the role assigned by the server
-      await setupWebRTC(newSocket, isOfferer);
-    });
-
-    newSocket.on("offer", async ({ offer, from }) => {
-      try {
-        console.log("Received offer from:", from);
-
-        // Only setup WebRTC if not already done (for the answerer)
-        if (!peerConnectionRef.current) {
-          console.log("Setting up WebRTC for answerer");
-          await setupWebRTC(newSocket, false);
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        }
-
-        const pc = peerConnectionRef.current;
-        console.log("Peer connection state:", pc?.signalingState);
-
-        if (pc && pc.signalingState === "stable") {
-          console.log("Setting remote description (offer)");
-          await pc.setRemoteDescription(new RTCSessionDescription(offer));
-          console.log("Creating answer");
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          console.log("Sending answer");
-          newSocket.emit("answer", { answer });
-
-          // Process buffered ICE candidates after setting remote description
-          console.log(
-            "Processing buffered ICE candidates:",
-            iceCandidateQueueRef.current.length
-          );
-          while (iceCandidateQueueRef.current.length > 0) {
-            const bufferedCandidate = iceCandidateQueueRef.current.shift();
-            try {
-              await pc.addIceCandidate(new RTCIceCandidate(bufferedCandidate));
-              console.log("Added buffered ICE candidate from offer");
-            } catch (e) {
-              console.error("Error adding buffered ICE candidate:", e);
-            }
-          }
-        } else {
-          console.log(
-            "Peer connection not in stable state, current state:",
-            pc?.signalingState
-          );
-        }
-      } catch (err) {
-        console.error("Error handling offer:", err);
-      }
-    });
-
-    newSocket.on("answer", async ({ answer }) => {
-      try {
-        console.log("Received answer");
-        const pc = peerConnectionRef.current;
-        console.log("Peer connection state:", pc?.signalingState);
-
-        if (pc && pc.signalingState === "have-local-offer") {
-          console.log("Setting remote description (answer)");
-          await pc.setRemoteDescription(new RTCSessionDescription(answer));
-          console.log("Answer applied successfully");
-
-          // Process buffered ICE candidates
-          console.log(
-            "Processing buffered ICE candidates:",
-            iceCandidateQueueRef.current.length
-          );
-          while (iceCandidateQueueRef.current.length > 0) {
-            const bufferedCandidate = iceCandidateQueueRef.current.shift();
-            try {
-              await pc.addIceCandidate(new RTCIceCandidate(bufferedCandidate));
-              console.log("Added buffered ICE candidate");
-            } catch (e) {
-              console.error("Error adding buffered ICE candidate:", e);
-            }
-          }
-        } else {
-          console.log(
-            "Peer connection not in have-local-offer state, current state:",
-            pc?.signalingState
-          );
-        }
-      } catch (err) {
-        console.error("Error handling answer:", err);
-      }
-    });
-
-    newSocket.on("ice-candidate", async ({ candidate }) => {
-      const pc = peerConnectionRef.current;
-      if (!pc || !candidate) {
-        return;
-      }
-
-      try {
-        if (pc.remoteDescription) {
-          console.log("Adding ICE candidate immediately");
-          await pc.addIceCandidate(new RTCIceCandidate(candidate));
-        } else {
-          console.log(
-            "Buffering ICE candidate - remote description not set yet"
-          );
-          iceCandidateQueueRef.current.push(candidate);
-        }
-      } catch (e) {
-        console.error("Error adding ice candidate:", e);
-      }
-    });
-
-    newSocket.on("chat-message", ({ message, from }) => {
-      setMessages((prev) => [...prev, { text: message, type: "stranger" }]);
-    });
-
-    newSocket.on("partner-disconnected", () => {
-      handlePartnerDisconnect();
-    });
-
-    const localStream = localStreamRef.current;
-    const peerConnection = peerConnectionRef.current;
-
-    return () => {
-      if (localStream) {
-        localStream.getTracks().forEach((track) => track.stop());
-      }
-      if (peerConnection) {
-        peerConnection.close();
-      }
-      newSocket.close();
-    };
-  }, []);
-
-  const handlePartnerDisconnect = () => {
-    setStatus("disconnected");
-    setPartnerId(null);
-    setMessages((prev) => [
-      ...prev,
-      { text: "Stranger disconnected", type: "system" },
-    ]);
-
+  // Cleanup function for peer connection
+  const cleanupPeerConnection = useCallback(() => {
+    console.log("🧹 Cleaning up peer connection");
+    
     if (peerConnectionRef.current) {
+      peerConnectionRef.current.ontrack = null;
+      peerConnectionRef.current.onicecandidate = null;
+      peerConnectionRef.current.oniceconnectionstatechange = null;
+      peerConnectionRef.current.onconnectionstatechange = null;
+      peerConnectionRef.current.onnegotiationneeded = null;
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
@@ -307,25 +71,315 @@ function Cider() {
       remoteVideoRef.current.srcObject = null;
     }
 
-    if (remoteStreamRef.current) {
-      remoteStreamRef.current.getTracks().forEach((track) => track.stop());
-      remoteStreamRef.current = null;
+    iceCandidateQueueRef.current = [];
+    isNegotiatingRef.current = false;
+    makingOfferRef.current = false;
+  }, []);
+
+  // Create peer connection with all handlers
+  const createPeerConnection = useCallback((socketInstance) => {
+    console.log("🔧 Creating new peer connection");
+    
+    const pc = new RTCPeerConnection(ICE_SERVERS);
+    peerConnectionRef.current = pc;
+
+    // Handle incoming tracks from remote peer
+    pc.ontrack = (event) => {
+      console.log("🎥 ontrack fired!", event.track.kind);
+      console.log("   Streams count:", event.streams?.length);
+      
+      if (remoteVideoRef.current && event.streams && event.streams[0]) {
+        console.log("   ✅ Setting remote video srcObject");
+        remoteVideoRef.current.srcObject = event.streams[0];
+        
+        // Force play
+        remoteVideoRef.current.play().catch(err => {
+          console.log("   ⚠️ Play error (usually ok):", err.message);
+        });
+      }
+    };
+
+    // Handle ICE candidates
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        console.log("🧊 Sending ICE candidate");
+        socketInstance.emit("ice-candidate", { candidate: event.candidate });
+      }
+    };
+
+    // Connection state monitoring
+    pc.onconnectionstatechange = () => {
+      console.log("📡 Connection state:", pc.connectionState);
+      if (pc.connectionState === "failed") {
+        console.log("❌ Connection failed, may need to restart");
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log("🧊 ICE connection state:", pc.iceConnectionState);
+      if (pc.iceConnectionState === "failed") {
+        console.log("❌ ICE failed, attempting restart");
+        pc.restartIce();
+      }
+    };
+
+    pc.onsignalingstatechange = () => {
+      console.log("📶 Signaling state:", pc.signalingState);
+      isNegotiatingRef.current = pc.signalingState !== "stable";
+    };
+
+    // Add local tracks to peer connection
+    if (localStreamRef.current) {
+      console.log("➕ Adding local tracks to peer connection");
+      localStreamRef.current.getTracks().forEach((track) => {
+        pc.addTrack(track, localStreamRef.current);
+      });
     }
 
-    // Clear ICE candidate queue and setup flag
-    iceCandidateQueueRef.current = [];
-    webrtcSetupInProgressRef.current = false;
-  };
+    return pc;
+  }, []);
+
+  // Get user media
+  const getLocalStream = useCallback(async () => {
+    if (localStreamRef.current) {
+      return localStreamRef.current;
+    }
+
+    try {
+      console.log("📹 Requesting camera/microphone access");
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+      
+      localStreamRef.current = stream;
+      
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+      
+      console.log("✅ Got local stream with tracks:", stream.getTracks().map(t => t.kind));
+      return stream;
+    } catch (err) {
+      console.error("❌ Failed to get local stream:", err);
+      setMessages((prev) => [
+        ...prev,
+        { text: "Camera/microphone access denied", type: "system" },
+      ]);
+      throw err;
+    }
+  }, []);
+
+  // Process queued ICE candidates
+  const processIceCandidateQueue = useCallback(async () => {
+    const pc = peerConnectionRef.current;
+    if (!pc || !pc.remoteDescription) return;
+
+    console.log(`🧊 Processing ${iceCandidateQueueRef.current.length} queued ICE candidates`);
+    
+    while (iceCandidateQueueRef.current.length > 0) {
+      const candidate = iceCandidateQueueRef.current.shift();
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        console.log("   ✅ Added queued ICE candidate");
+      } catch (e) {
+        console.error("   ❌ Failed to add ICE candidate:", e);
+      }
+    }
+  }, []);
+
+  // Handle partner disconnect
+  const handlePartnerDisconnect = useCallback(() => {
+    console.log("👋 Partner disconnected");
+    setStatus("disconnected");
+    setPartnerId(null);
+    setMessages((prev) => [
+      ...prev,
+      { text: "Stranger disconnected", type: "system" },
+    ]);
+    cleanupPeerConnection();
+  }, [cleanupPeerConnection]);
+
+  // Initialize socket connection
+  useEffect(() => {
+    console.log("🔌 Initializing socket connection");
+    const newSocket = io(SOCKET_URL);
+    socketRef.current = newSocket;
+    setSocket(newSocket);
+
+    newSocket.on("connect", () => {
+      console.log("✅ Connected to signaling server");
+    });
+
+    newSocket.on("waiting", () => {
+      console.log("⏳ Waiting for partner");
+      setStatus("waiting");
+      setMessages((prev) => [
+        ...prev,
+        { text: "Looking for a stranger...", type: "system" },
+      ]);
+    });
+
+    newSocket.on("partner-found", async ({ partnerId: pid, isOfferer }) => {
+      console.log(`🎯 Partner found! I am ${isOfferer ? "OFFERER" : "ANSWERER"}`);
+      setStatus("connected");
+      setPartnerId(pid);
+      setMessages((prev) => [
+        ...prev,
+        { text: "Stranger connected!", type: "system" },
+      ]);
+
+      try {
+        // Get local media first
+        await getLocalStream();
+        
+        // Create peer connection
+        const pc = createPeerConnection(newSocket);
+
+        // Only the offerer creates and sends the offer
+        if (isOfferer) {
+          console.log("📤 Creating offer (I am offerer)");
+          makingOfferRef.current = true;
+          
+          const offer = await pc.createOffer({
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: true,
+          });
+          
+          await pc.setLocalDescription(offer);
+          console.log("📤 Sending offer");
+          newSocket.emit("offer", { offer: pc.localDescription });
+          
+          makingOfferRef.current = false;
+        }
+      } catch (err) {
+        console.error("❌ Error in partner-found handler:", err);
+      }
+    });
+
+    newSocket.on("offer", async ({ offer, from }) => {
+      console.log("📥 Received offer from:", from);
+      
+      try {
+        const pc = peerConnectionRef.current;
+        
+        if (!pc) {
+          console.log("⚠️ No peer connection, getting stream first");
+          await getLocalStream();
+          createPeerConnection(newSocket);
+        }
+
+        const currentPc = peerConnectionRef.current;
+        
+        // Handle glare (both sides trying to negotiate)
+        const offerCollision = makingOfferRef.current || currentPc.signalingState !== "stable";
+        
+        if (offerCollision) {
+          console.log("⚠️ Offer collision detected, ignoring (I should be answerer)");
+          return;
+        }
+
+        console.log("📝 Setting remote description (offer)");
+        await currentPc.setRemoteDescription(new RTCSessionDescription(offer));
+        
+        // Process any queued ICE candidates
+        await processIceCandidateQueue();
+        
+        console.log("📤 Creating answer");
+        const answer = await currentPc.createAnswer();
+        await currentPc.setLocalDescription(answer);
+        
+        console.log("📤 Sending answer");
+        newSocket.emit("answer", { answer: currentPc.localDescription });
+        
+      } catch (err) {
+        console.error("❌ Error handling offer:", err);
+      }
+    });
+
+    newSocket.on("answer", async ({ answer }) => {
+      console.log("📥 Received answer");
+      
+      try {
+        const pc = peerConnectionRef.current;
+        
+        if (!pc) {
+          console.log("⚠️ No peer connection when receiving answer");
+          return;
+        }
+
+        if (pc.signalingState !== "have-local-offer") {
+          console.log("⚠️ Not in have-local-offer state, ignoring answer");
+          return;
+        }
+
+        console.log("📝 Setting remote description (answer)");
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        
+        // Process any queued ICE candidates
+        await processIceCandidateQueue();
+        
+        console.log("✅ Answer applied successfully");
+      } catch (err) {
+        console.error("❌ Error handling answer:", err);
+      }
+    });
+
+    newSocket.on("ice-candidate", async ({ candidate }) => {
+      if (!candidate) return;
+
+      const pc = peerConnectionRef.current;
+      
+      if (!pc) {
+        console.log("🧊 Queueing ICE candidate (no peer connection yet)");
+        iceCandidateQueueRef.current.push(candidate);
+        return;
+      }
+
+      try {
+        if (pc.remoteDescription) {
+          console.log("🧊 Adding ICE candidate directly");
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } else {
+          console.log("🧊 Queueing ICE candidate (no remote description)");
+          iceCandidateQueueRef.current.push(candidate);
+        }
+      } catch (e) {
+        console.error("❌ Error adding ICE candidate:", e);
+      }
+    });
+
+    newSocket.on("chat-message", ({ message }) => {
+      setMessages((prev) => [...prev, { text: message, type: "stranger" }]);
+    });
+
+    newSocket.on("partner-disconnected", () => {
+      handlePartnerDisconnect();
+    });
+
+    return () => {
+      console.log("🔌 Disconnecting socket");
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => track.stop());
+        localStreamRef.current = null;
+      }
+      cleanupPeerConnection();
+      newSocket.close();
+    };
+  }, [getLocalStream, createPeerConnection, processIceCandidateQueue, handlePartnerDisconnect, cleanupPeerConnection]);
 
   const startChat = () => {
     if (socket && status === "disconnected") {
+      console.log("▶️ Starting chat");
       setMessages([]);
+      cleanupPeerConnection();
       socket.emit("find-partner");
     }
   };
 
   const nextChat = () => {
     if (socket) {
+      console.log("⏭️ Next chat");
       socket.emit("disconnect-chat");
       handlePartnerDisconnect();
       setTimeout(() => startChat(), 500);
@@ -334,6 +388,7 @@ function Cider() {
 
   const stopChat = () => {
     if (socket) {
+      console.log("⏹️ Stop chat");
       socket.emit("disconnect-chat");
       handlePartnerDisconnect();
     }
@@ -359,15 +414,12 @@ function Cider() {
 
   return (
     <>
-      {/* Navbar - always visible */}
       <Navbar />
 
-      {/* Show Landing Page for non-authenticated users */}
       <SignedOut>
         <LandingPage />
       </SignedOut>
 
-      {/* Show Video Chat for authenticated users */}
       <SignedIn>
         <div className="min-h-screen bg-black p-4 pt-20" style={{ position: 'relative' }}>
           <div style={{ width: '100%', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 0 }}>
@@ -391,145 +443,139 @@ function Cider() {
               {/* Video Section */}
               <div className="lg:col-span-2 flex flex-col gap-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Local Video */}
-              <div className="bg-zinc-900 rounded-lg overflow-hidden aspect-video relative border border-zinc-800">
-                <video
-                  ref={localVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover"
-                />
-                {!videoEnabled && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-800">
-                    <VideoOff className="w-16 h-16 text-zinc-500" />
-                  </div>
-                )}
-                <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-                  <span className="text-white text-sm">You</span>
-                </div>
-              </div>
-
-              {/* Remote Video */}
-              <div className="bg-zinc-900 rounded-lg overflow-hidden aspect-video relative border border-zinc-800">
-                <video
-                  ref={remoteVideoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-cover"
-                  onLoadedMetadata={(e) => {
-                    console.log("🎬 Remote video metadata loaded, attempting play");
-                    e.target.play().catch(err => {
-                      console.error("❌ Remote video play failed:", err);
-                    });
-                  }}
-                />
-                {status !== "connected" && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
-                    <p className="text-zinc-400 text-xl">
-                      {status === "waiting"
-                        ? "Waiting for stranger..."
-                        : "No one connected"}
-                    </p>
-                  </div>
-                )}
-                {status === "connected" && (
-                  <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-                    <span className="text-white text-sm">Stranger</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Controls */}
-            <div className="flex gap-3 justify-center mt-2">
-              <button
-                onClick={startChat}
-                disabled={status !== "disconnected"}
-                className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-green-600 text-green-500 hover:bg-green-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-bold transition-all duration-200"
-              >
-                <Power className="w-5 h-5" />
-                Start
-              </button>
-
-              <button
-                onClick={toggleVideo}
-                className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-blue-600 text-blue-500 hover:bg-blue-900/20 rounded-lg font-bold transition-all duration-200"
-              >
-                {videoEnabled ? (
-                  <Video className="w-5 h-5" />
-                ) : (
-                  <VideoOff className="w-5 h-5" />
-                )}
-                {videoEnabled ? "Disable" : "Enable"}
-              </button>
-
-              <button
-                onClick={nextChat}
-                disabled={status !== "connected"}
-                className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-yellow-600 text-yellow-500 hover:bg-yellow-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-bold transition-all duration-200"
-              >
-                <SkipForward className="w-5 h-5" />
-                Next
-              </button>
-
-              <button
-                onClick={stopChat}
-                disabled={status === "disconnected"}
-                className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-red-600 text-red-500 hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-bold transition-all duration-200"
-              >
-                <Power className="w-5 h-5" />
-                Stop
-              </button>
-            </div>
-          </div>
-
-          {/* Chat Section */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex flex-col h-[600px]">
-            <h2 className="text-2xl font-bold text-white mb-4">Chat</h2>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto space-y-2 mb-4 scrollbar-thin">
-              {messages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`p-3 rounded-lg ${
-                    msg.type === "system"
-                      ? "bg-zinc-800 text-zinc-400 text-center text-sm"
-                      : msg.type === "you"
-                      ? "bg-blue-900/30 border border-blue-800 text-blue-100 ml-auto max-w-[80%]"
-                      : "bg-zinc-800 text-zinc-200 mr-auto max-w-[80%]"
-                  }`}
-                >
-                  {msg.type !== "system" && (
-                    <div className="text-xs opacity-75 mb-1">
-                      {msg.type === "you" ? "You" : "Stranger"}
+                  {/* Local Video */}
+                  <div className="bg-zinc-900 rounded-lg overflow-hidden aspect-video relative border border-zinc-800">
+                    <video
+                      ref={localVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover"
+                    />
+                    {!videoEnabled && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-zinc-800">
+                        <VideoOff className="w-16 h-16 text-zinc-500" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+                      <span className="text-white text-sm">You</span>
                     </div>
-                  )}
-                  {msg.text}
-                </div>
-              ))}
-            </div>
+                  </div>
 
-            {/* Input */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Type a message..."
-                disabled={status !== "connected"}
-                className="flex-1 px-4 py-2 bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:opacity-50"
-              />
-              <button
-                onClick={sendMessage}
-                disabled={status !== "connected" || !inputMessage.trim()}
-                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 disabled:cursor-not-allowed text-white rounded-lg transition border border-zinc-700"
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            </div>
+                  {/* Remote Video */}
+                  <div className="bg-zinc-900 rounded-lg overflow-hidden aspect-video relative border border-zinc-800">
+                    <video
+                      ref={remoteVideoRef}
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                    {status !== "connected" && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
+                        <p className="text-zinc-400 text-xl">
+                          {status === "waiting"
+                            ? "Waiting for stranger..."
+                            : "No one connected"}
+                        </p>
+                      </div>
+                    )}
+                    {status === "connected" && (
+                      <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+                        <span className="text-white text-sm">Stranger</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Controls */}
+                <div className="flex gap-3 justify-center mt-2">
+                  <button
+                    onClick={startChat}
+                    disabled={status !== "disconnected"}
+                    className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-green-600 text-green-500 hover:bg-green-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-bold transition-all duration-200"
+                  >
+                    <Power className="w-5 h-5" />
+                    Start
+                  </button>
+
+                  <button
+                    onClick={toggleVideo}
+                    className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-blue-600 text-blue-500 hover:bg-blue-900/20 rounded-lg font-bold transition-all duration-200"
+                  >
+                    {videoEnabled ? (
+                      <Video className="w-5 h-5" />
+                    ) : (
+                      <VideoOff className="w-5 h-5" />
+                    )}
+                    {videoEnabled ? "Disable" : "Enable"}
+                  </button>
+
+                  <button
+                    onClick={nextChat}
+                    disabled={status !== "connected"}
+                    className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-yellow-600 text-yellow-500 hover:bg-yellow-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-bold transition-all duration-200"
+                  >
+                    <SkipForward className="w-5 h-5" />
+                    Next
+                  </button>
+
+                  <button
+                    onClick={stopChat}
+                    disabled={status === "disconnected"}
+                    className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-red-600 text-red-500 hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-bold transition-all duration-200"
+                  >
+                    <Power className="w-5 h-5" />
+                    Stop
+                  </button>
+                </div>
+              </div>
+
+              {/* Chat Section */}
+              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex flex-col h-[600px]">
+                <h2 className="text-2xl font-bold text-white mb-4">Chat</h2>
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto space-y-2 mb-4 scrollbar-thin">
+                  {messages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-3 rounded-lg ${
+                        msg.type === "system"
+                          ? "bg-zinc-800 text-zinc-400 text-center text-sm"
+                          : msg.type === "you"
+                          ? "bg-blue-900/30 border border-blue-800 text-blue-100 ml-auto max-w-[80%]"
+                          : "bg-zinc-800 text-zinc-200 mr-auto max-w-[80%]"
+                      }`}
+                    >
+                      {msg.type !== "system" && (
+                        <div className="text-xs opacity-75 mb-1">
+                          {msg.type === "you" ? "You" : "Stranger"}
+                        </div>
+                      )}
+                      {msg.text}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+                    placeholder="Type a message..."
+                    disabled={status !== "connected"}
+                    className="flex-1 px-4 py-2 bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:opacity-50"
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={status !== "connected" || !inputMessage.trim()}
+                    className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 disabled:cursor-not-allowed text-white rounded-lg transition border border-zinc-700"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
