@@ -8,7 +8,6 @@ import Navbar from "./Navbar";
 
 const SOCKET_URL = "https://cider-j4xo.onrender.com";
 
-// ICE servers configuration with TURN servers for reliable connectivity
 const ICE_SERVERS = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
@@ -16,7 +15,7 @@ const ICE_SERVERS = {
     { urls: "stun:stun2.l.google.com:19302" },
     { urls: "stun:stun3.l.google.com:19302" },
     { urls: "stun:stun4.l.google.com:19302" },
-    // Free TURN servers for reliability
+    
     {
       urls: "turn:openrelay.metered.ca:80",
       username: "openrelayproject",
@@ -524,20 +523,20 @@ function Cider() {
                   <button
                     onClick={startChat}
                     disabled={status !== "disconnected"}
-                    className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-green-600 text-green-500 hover:bg-green-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-bold transition-all duration-200"
+                    className="group relative flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-emerald-500/10 to-green-600/10 backdrop-blur-sm border border-emerald-500/30 text-emerald-400 rounded-lg font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/20 hover:border-emerald-400/50 hover:from-emerald-500/20 hover:to-green-600/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
                   >
-                    <Power className="w-5 h-5" />
+                    <Power className="w-5 h-5 transition-transform duration-300 group-hover:rotate-180" />
                     Start
                   </button>
 
                   <button
                     onClick={toggleVideo}
-                    className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-blue-600 text-blue-500 hover:bg-blue-900/20 rounded-lg font-bold transition-all duration-200"
+                    className="group relative flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 backdrop-blur-sm border border-cyan-500/30 text-cyan-400 rounded-lg font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/20 hover:border-cyan-400/50 hover:from-cyan-500/20 hover:to-blue-600/20 active:scale-95"
                   >
                     {videoEnabled ? (
-                      <Video className="w-5 h-5" />
+                      <Video className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
                     ) : (
-                      <VideoOff className="w-5 h-5" />
+                      <VideoOff className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
                     )}
                     {videoEnabled ? "Disable" : "Enable"}
                   </button>
@@ -545,18 +544,18 @@ function Cider() {
                   <button
                     onClick={nextChat}
                     disabled={status !== "connected"}
-                    className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-yellow-600 text-yellow-500 hover:bg-yellow-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-bold transition-all duration-200"
+                    className="group relative flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-amber-500/10 to-orange-600/10 backdrop-blur-sm border border-amber-500/30 text-amber-400 rounded-lg font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-amber-500/20 hover:border-amber-400/50 hover:from-amber-500/20 hover:to-orange-600/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
                   >
-                    <SkipForward className="w-5 h-5" />
+                    <SkipForward className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
                     Next
                   </button>
 
                   <button
                     onClick={stopChat}
                     disabled={status === "disconnected"}
-                    className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border-2 border-red-600 text-red-500 hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-bold transition-all duration-200"
+                    className="group relative flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-rose-500/10 to-red-600/10 backdrop-blur-sm border border-rose-500/30 text-rose-400 rounded-lg font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-rose-500/20 hover:border-rose-400/50 hover:from-rose-500/20 hover:to-red-600/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
                   >
-                    <Power className="w-5 h-5" />
+                    <Power className="w-5 h-5 transition-transform duration-300 group-hover:rotate-180" />
                     Stop
                   </button>
                 </div>
