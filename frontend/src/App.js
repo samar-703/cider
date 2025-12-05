@@ -234,8 +234,13 @@ function Cider() {
 
       try {
         // BOTH offerer and answerer need to set up their peer connection
-        console.log("📹 Getting local media stream");
-        await getLocalStream();
+        // Ensure we have local stream (should already exist from startChat, but check anyway)
+        if (!localStreamRef.current) {
+          console.log("📹 Getting local media stream");
+          await getLocalStream();
+        } else {
+          console.log("✅ Local stream already available");
+        }
         
         console.log("🔧 Creating peer connection with local tracks");
         const pc = createPeerConnection(newSocket);
@@ -399,11 +404,25 @@ function Cider() {
     };
   }, [getLocalStream, createPeerConnection, processIceCandidateQueue, handlePartnerDisconnect, cleanupPeerConnection]);
 
-  const startChat = () => {
+  const startChat = async () => {
     if (socket && status === "disconnected") {
       console.log("▶️ Starting chat");
       setMessages([]);
       cleanupPeerConnection();
+      
+      // Request camera access immediately so user sees their video while waiting
+      try {
+        await getLocalStream();
+        console.log("✅ Local camera started, now finding partner");
+      } catch (err) {
+        console.error("❌ Failed to start camera:", err);
+        setMessages((prev) => [
+          ...prev,
+          { text: "Failed to access camera. Please allow camera permissions.", type: "system" },
+        ]);
+        return; // Don't search for partner if camera fails
+      }
+      
       socket.emit("find-partner");
     }
   };
