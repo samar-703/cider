@@ -69,8 +69,6 @@ Before running this application, make sure you have:
 
 ## 🚀 Getting Started
 
-> **⚠️ SECURITY NOTE**: The backend URL is hardcoded since it's public anyway. Only keep actual secrets (like API secret keys, database passwords) in `.env` files and never commit them to Git!
-
 ### 1. Clone the Repository
 
 ```bash
