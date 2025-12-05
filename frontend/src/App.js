@@ -621,9 +621,9 @@ function Cider() {
                   <button
                     onClick={sendMessage}
                     disabled={status !== "connected" || !inputMessage.trim()}
-                    className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 disabled:cursor-not-allowed text-white rounded-lg transition border border-zinc-700"
+                    className="group px-4 py-2 bg-gradient-to-br from-blue-500/10 to-indigo-600/10 backdrop-blur-sm border border-blue-500/30 text-blue-400 rounded-lg font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/20 hover:border-blue-400/50 hover:from-blue-500/20 hover:to-indigo-600/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
                   >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </button>
                 </div>
               </div>
