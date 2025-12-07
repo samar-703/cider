@@ -136,7 +136,7 @@ The application will open at `http://localhost:3000`.
 
 > **Note**: The backend URL is hardcoded in the frontend. To change it, edit the `SOCKET_URL` constant in `src/App.js`.
 
-## 🎮 How to Use
+##  How to Use
 
 1. **Sign In**: Click "Sign In" on the landing page using Clerk authentication
 2. **Grant Permissions**: Allow camera and microphone access when prompted
@@ -155,7 +155,7 @@ The application will open at `http://localhost:3000`.
 ### Connection Flow
 
 1. **User Authentication**: Users sign in through Clerk
-2. **Socket Connection**: Client establishes WebSocket connection to the server
+2. **Socket Connection**: Client establishes a WebSocket connection to the server
 3. **Partner Matching**: 
    - User clicks "Start" and emits `find-partner` event
    - Server maintains a waiting queue
@@ -188,7 +188,7 @@ The application will open at `http://localhost:3000`.
 - **LandingPage.js**: Authentication landing page
 - **Navbar.js**: Navigation bar with user profile
 - **Particles.js**: Animated particle background
-- **server.js**: Backend Socket.IO server for signaling
+- **server.js**: Backend Socket.IO server for signalling
 
 ## 📦 Project Structure
 
@@ -225,7 +225,7 @@ omegle-clone/
 1. Push your code to GitHub
 2. Import project to Vercel
 3. Set root directory to `frontend`
-4. (Optional) Add environment variable for Clerk:
+4. (Optional) Add an environment variable for Clerk:
    - `REACT_APP_CLERK_PUBLISHABLE_KEY`
 5. If your backend URL changes, update the `SOCKET_URL` in `src/App.js`
 6. Deploy
@@ -260,20 +260,6 @@ omegle-clone/
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-## 🙏 Acknowledgments
-
-- Inspired by the original Omegle platform
-- Built with modern web technologies
-- Thanks to the open-source community
-
 ## 📞 Support
 
 For issues, questions, or suggestions, please open an issue on GitHub.
-
----
-
-**Note**: This application is for educational purposes. Please use responsibly and respect other users.
