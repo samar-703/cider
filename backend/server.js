@@ -37,12 +37,10 @@ io.on('connection', (socket) => {
       console.log(`Removed ${socket.id} from waiting queue (duplicate request)`);
     }
 
-    // Find a partner that is NOT the same socket
     let partner = null;
     while (waitingUsers.length > 0) {
       const potentialPartner = waitingUsers.shift();
       
-      // Make sure we're not matching with ourselves
       if (potentialPartner.id !== socket.id) {
         partner = potentialPartner;
         break;

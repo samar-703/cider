@@ -328,8 +328,8 @@ function Cider() {
     });
 
     newSocket.on("answer", async ({ answer }) => {
-      console.log("📥 Received answer");
-      console.log("📊 Answer SDP includes:", {
+      console.log("Received answer");
+      console.log("Answer SDP includes:", {
         audio: answer.sdp?.includes('m=audio'),
         video: answer.sdp?.includes('m=video')
       });
@@ -338,26 +338,26 @@ function Cider() {
         const pc = peerConnectionRef.current;
         
         if (!pc) {
-          console.error("❌ No peer connection when receiving answer");
+          console.error("No peer connection when receiving answer");
           return;
         }
 
-        console.log("📊 Current signaling state:", pc.signalingState);
+        console.log("Current signaling state:", pc.signalingState);
         if (pc.signalingState !== "have-local-offer") {
-          console.error("❌ Not in have-local-offer state, current state:", pc.signalingState);
+          console.error("Not in have-local-offer state, current state:", pc.signalingState);
           return;
         }
 
-        console.log("📝 Setting remote description (answer)");
+        console.log("Setting remote description (answer)");
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         
         // Process any queued ICE candidates
         await processIceCandidateQueue();
         
-        console.log("✅ Answer applied successfully");
-        console.log("📊 Transceivers:", pc.getTransceivers().map(t => `${t.mid}: ${t.direction}`));
+        console.log("Answer applied successfully");
+        console.log("Transceivers:", pc.getTransceivers().map(t => `${t.mid}: ${t.direction}`));
       } catch (err) {
-        console.error("❌ Error handling answer:", err);
+        console.error("Error handling answer:", err);
       }
     });
 
@@ -367,21 +367,21 @@ function Cider() {
       const pc = peerConnectionRef.current;
       
       if (!pc) {
-        console.log("🧊 Queueing ICE candidate (no peer connection yet)");
+        console.log("Queueing ICE candidate (no peer connection yet)");
         iceCandidateQueueRef.current.push(candidate);
         return;
       }
 
       try {
         if (pc.remoteDescription) {
-          console.log("🧊 Adding ICE candidate directly");
+          console.log("Adding ICE candidate directly");
           await pc.addIceCandidate(new RTCIceCandidate(candidate));
         } else {
-          console.log("🧊 Queueing ICE candidate (no remote description)");
+          console.log("Queueing ICE candidate (no remote description)");
           iceCandidateQueueRef.current.push(candidate);
         }
       } catch (e) {
-        console.error("❌ Error adding ICE candidate:", e);
+        console.error("Error adding ICE candidate:", e);
       }
     });
 
