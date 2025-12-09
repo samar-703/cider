@@ -292,38 +292,38 @@ function Cider() {
 
         const currentPc = peerConnectionRef.current;
         
-        console.log(`📊 Peer connection state: ${currentPc.signalingState}`);
-        console.log(`📊 Local tracks (senders): ${currentPc.getSenders().length}`);
-        console.log(`📊 Senders details:`, currentPc.getSenders().map(s => s.track?.kind));
+        console.log(`Peer connection state: ${currentPc.signalingState}`);
+        console.log(`Local tracks (senders): ${currentPc.getSenders().length}`);
+        console.log(`Senders details:`, currentPc.getSenders().map(s => s.track?.kind));
         
         // Handle glare (both sides trying to negotiate)
         const offerCollision = makingOfferRef.current || currentPc.signalingState !== "stable";
         
         if (offerCollision) {
-          console.log("⚠️ Offer collision detected, ignoring (I should be answerer)");
+          console.log("Offer collision detected, ignoring (I should be answerer)");
           return;
         }
 
-        console.log("📝 Setting remote description (offer)");
+        console.log("Setting remote description (offer)");
         await currentPc.setRemoteDescription(new RTCSessionDescription(offer));
         
         // Process any queued ICE candidates
         await processIceCandidateQueue();
         
-        console.log("📤 Creating answer");
+        console.log("Creating answer");
         const answer = await currentPc.createAnswer();
-        console.log("📊 Answer SDP includes:", {
+        console.log("Answer SDP includes:", {
           audio: answer.sdp.includes('m=audio'),
           video: answer.sdp.includes('m=video')
         });
         await currentPc.setLocalDescription(answer);
         
-        console.log("📤 Sending answer to offerer");
-        console.log("📊 Transceivers after answer:", currentPc.getTransceivers().map(t => `${t.mid}: ${t.direction}`));
+        console.log("Sending answer to offerer");
+        console.log("Transceivers after answer:", currentPc.getTransceivers().map(t => `${t.mid}: ${t.direction}`));
         newSocket.emit("answer", { answer: currentPc.localDescription });
         
       } catch (err) {
-        console.error("❌ Error handling offer:", err);
+        console.error("Error handling offer:", err);
       }
     });
 
@@ -351,7 +351,6 @@ function Cider() {
         console.log("Setting remote description (answer)");
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         
-        // Process any queued ICE candidates
         await processIceCandidateQueue();
         
         console.log("Answer applied successfully");
