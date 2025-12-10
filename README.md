@@ -150,25 +150,6 @@ The application will open at `http://localhost:3000`.
    - Click "Stop" to end the current chat
 6. **Sign Out**: Click your profile icon in the navbar to sign out
 
-## 🔧 How It Works
-
-### Connection Flow
-
-1. **User Authentication**: Users sign in through Clerk
-2. **Socket Connection**: Client establishes a WebSocket connection to the server
-3. **Partner Matching**: 
-   - User clicks "Start" and emits `find-partner` event
-   - Server maintains a waiting queue
-   - When two users are available, server pairs them
-   - One user is designated as "offerer", the other as "answerer"
-4. **WebRTC Handshake**:
-   - Offerer creates and sends an SDP offer
-   - Answerer receives offer and sends back an SDP answer
-   - Both peers exchange ICE candidates for NAT traversal
-5. **Peer-to-Peer Connection**: Direct video/audio stream established
-6. **Chat Communication**: Text messages relayed through Socket.IO
-7. **Disconnection**: Either user can skip or stop, triggering cleanup
-
 ### Architecture
 
 ```
@@ -230,7 +211,7 @@ omegle-clone/
 5. If your backend URL changes, update the `SOCKET_URL` in `src/App.js`
 6. Deploy
 
-## 🔒 Security & Privacy
+##  Security & Privacy
 
 - **No Data Storage**: Conversations are not recorded or stored
 - **Peer-to-Peer**: Video streams are transmitted directly between users
