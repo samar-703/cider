@@ -218,29 +218,4 @@ omegle-clone/
 - **Secure Authentication**: Clerk handles user authentication securely
 - **HTTPS Required**: Use HTTPS in production for WebRTC to work properly
 
-## 🐛 Troubleshooting
 
-### Camera/Microphone Not Working
-- Ensure browser permissions are granted
-- Check if another application is using the camera
-- Use HTTPS (required for WebRTC in production)
-
-### Connection Issues
-- Verify backend server is running
-- Check CORS settings in `server.js`
-- Ensure firewall allows WebRTC connections
-- Verify STUN server accessibility
-
-### Video Not Showing
-- Check browser console for errors
-- Ensure both users have granted camera permissions
-- Try refreshing the page
-- Check network connectivity
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📞 Support
-
-For issues, questions, or suggestions, please open an issue on GitHub.
