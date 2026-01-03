@@ -2,7 +2,7 @@
 
 A modern, real-time video chat application that connects strangers for random video conversations, inspired by Omegle. Built with React, Node.js, Socket.IO, and WebRTC.
 
-## 🌟 Features
+## Features
 
 ### Core Functionality
 - **Random Video Matching**: Instantly connect with random strangers from around the world
