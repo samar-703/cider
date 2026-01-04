@@ -67,7 +67,7 @@ Before running this application, make sure you have:
 - **Modern Web Browser** - Chrome, Firefox, Safari, or Edge
 - **Webcam and Microphone** - For video chat functionality
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Clone the Repository
 
@@ -171,7 +171,7 @@ The application will open at `http://localhost:3000`.
 - **Particles.js**: Animated particle background
 - **server.js**: Backend Socket.IO server for signalling
 
-## 📦 Project Structure
+## Project Structure
 
 ```
 omegle-clone/
@@ -191,7 +191,7 @@ omegle-clone/
 └── README.md               # This file
 ```
 
-## 🌐 Deployment
+## Deployment
 
 ### Backend Deployment (Render/Heroku)
 
