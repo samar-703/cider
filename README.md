@@ -27,7 +27,7 @@ A modern, real-time video chat application that connects strangers for random vi
 - **Automatic Reconnection**: Seamless handling of disconnections
 - **Cross-browser Compatibility**: Works on Chrome, Firefox, Safari, and Edge
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 ### Frontend
 | Technology | Version | Description |
@@ -57,7 +57,7 @@ A modern, real-time video chat application that connects strangers for random vi
 | **ICE Framework** | Interactive Connectivity Establishment for peer discovery |
 | **SDP** | Session Description Protocol for media negotiation |
 
-## 📋 Prerequisites
+##  Prerequisites
 
 Before running this application, make sure you have:
 
