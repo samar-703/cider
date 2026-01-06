@@ -67,7 +67,7 @@ function LandingPage() {
           </SignInButton>
 
           <p className="text-zinc-500 text-sm mt-6">
-            Sign in to start chatting with strangers
+            Sign in to get started
           </p>
         </div>
       </div>
