@@ -2,7 +2,7 @@
 
 A modern, real-time video chat application that connects strangers for random video conversations, inspired by Omegle. Built with React, Node.js, Socket.IO, and WebRTC.
 
-## 🌟 Features
+## Features
 
 ### Core Functionality
 - **Random Video Matching**: Instantly connect with random strangers from around the world
@@ -27,7 +27,7 @@ A modern, real-time video chat application that connects strangers for random vi
 - **Automatic Reconnection**: Seamless handling of disconnections
 - **Cross-browser Compatibility**: Works on Chrome, Firefox, Safari, and Edge
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 ### Frontend
 | Technology | Version | Description |
@@ -57,7 +57,7 @@ A modern, real-time video chat application that connects strangers for random vi
 | **ICE Framework** | Interactive Connectivity Establishment for peer discovery |
 | **SDP** | Session Description Protocol for media negotiation |
 
-## 📋 Prerequisites
+##  Prerequisites
 
 Before running this application, make sure you have:
 
@@ -67,7 +67,7 @@ Before running this application, make sure you have:
 - **Modern Web Browser** - Chrome, Firefox, Safari, or Edge
 - **Webcam and Microphone** - For video chat functionality
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Clone the Repository
 
@@ -150,25 +150,6 @@ The application will open at `http://localhost:3000`.
    - Click "Stop" to end the current chat
 6. **Sign Out**: Click your profile icon in the navbar to sign out
 
-## 🔧 How It Works
-
-### Connection Flow
-
-1. **User Authentication**: Users sign in through Clerk
-2. **Socket Connection**: Client establishes a WebSocket connection to the server
-3. **Partner Matching**: 
-   - User clicks "Start" and emits `find-partner` event
-   - Server maintains a waiting queue
-   - When two users are available, server pairs them
-   - One user is designated as "offerer", the other as "answerer"
-4. **WebRTC Handshake**:
-   - Offerer creates and sends an SDP offer
-   - Answerer receives offer and sends back an SDP answer
-   - Both peers exchange ICE candidates for NAT traversal
-5. **Peer-to-Peer Connection**: Direct video/audio stream established
-6. **Chat Communication**: Text messages relayed through Socket.IO
-7. **Disconnection**: Either user can skip or stop, triggering cleanup
-
 ### Architecture
 
 ```
@@ -190,7 +171,7 @@ The application will open at `http://localhost:3000`.
 - **Particles.js**: Animated particle background
 - **server.js**: Backend Socket.IO server for signalling
 
-## 📦 Project Structure
+## Project Structure
 
 ```
 omegle-clone/
@@ -210,7 +191,7 @@ omegle-clone/
 └── README.md               # This file
 ```
 
-## 🌐 Deployment
+## Deployment
 
 ### Backend Deployment (Render/Heroku)
 
@@ -230,36 +211,11 @@ omegle-clone/
 5. If your backend URL changes, update the `SOCKET_URL` in `src/App.js`
 6. Deploy
 
-## 🔒 Security & Privacy
+##  Security & Privacy
 
 - **No Data Storage**: Conversations are not recorded or stored
 - **Peer-to-Peer**: Video streams are transmitted directly between users
 - **Secure Authentication**: Clerk handles user authentication securely
 - **HTTPS Required**: Use HTTPS in production for WebRTC to work properly
 
-## 🐛 Troubleshooting
 
-### Camera/Microphone Not Working
-- Ensure browser permissions are granted
-- Check if another application is using the camera
-- Use HTTPS (required for WebRTC in production)
-
-### Connection Issues
-- Verify backend server is running
-- Check CORS settings in `server.js`
-- Ensure firewall allows WebRTC connections
-- Verify STUN server accessibility
-
-### Video Not Showing
-- Check browser console for errors
-- Ensure both users have granted camera permissions
-- Try refreshing the page
-- Check network connectivity
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📞 Support
-
-For issues, questions, or suggestions, please open an issue on GitHub.

@@ -259,10 +259,16 @@ function LandingPage() {
               </button>
             </SignInButton>
 
+<<<<<<< HEAD
             <p className="text-zinc-500 text-sm mt-6">
               Sign in to start chatting with strangers
             </p>
           </motion.div>
+=======
+          <p className="text-zinc-500 text-sm mt-6">
+            Sign in to get started
+          </p>
+>>>>>>> 99b8b03d5b032f82274a652d434e58eb9db28cf5
         </div>
       </div>
     </div>
