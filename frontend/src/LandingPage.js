@@ -234,7 +234,7 @@ function LandingPage() {
             className="text-lg md:text-xl text-zinc-400 mb-10 max-w-2xl mx-auto leading-relaxed"
           >
             Connect with strangers from around the world through instant video
-            chat. Make new friends, practice languages, or just have fun — one
+            chat. Make new friends just one
             click away.
           </motion.p>
 
@@ -275,22 +275,6 @@ function LandingPage() {
             <StatItem value="1M+" label="Connections" delay={0.8} />
           </motion.div>
         </div>
-
-        {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="w-6 h-10 rounded-full border-2 border-zinc-600 flex justify-center pt-2"
-          >
-            <div className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
-          </motion.div>
-        </motion.div>
       </section>
 
       {/* Features Section */}
