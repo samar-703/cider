@@ -1,270 +1,463 @@
-import React from "react";
+import React, { useRef } from "react";
 import { SignInButton } from "@clerk/clerk-react";
-import { motion } from "framer-motion";
-import { Video, MessageCircle, Shield, Zap, Globe, Users } from "lucide-react";
+import { motion, useInView } from "framer-motion";
+import {
+  Video,
+  MessageSquare,
+  ShieldCheck,
+  Zap,
+  Globe2,
+  Users,
+  ArrowRight,
+  Github,
+  Twitter,
+  Heart,
+  Sparkles,
+} from "lucide-react";
 import Particles from "./Particles";
 
-// Bento Card Component with magic hover effects
-const BentoCard = ({
-  children,
-  className = "",
-  delay = 0,
-  gradient = "from-blue-500/20 to-purple-500/20",
+// Feature Card Component - Clean bento style
+const FeatureCard = ({
+  icon: Icon,
+  title,
+  description,
+  color,
+  delay,
+  large = false,
 }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
+
+  const colorConfig = {
+    blue: {
+      iconBg: "bg-blue-500/10",
+      iconColor: "text-blue-400",
+      borderHover: "hover:border-blue-500/50",
+      glow: "group-hover:shadow-blue-500/20",
+    },
+    purple: {
+      iconBg: "bg-purple-500/10",
+      iconColor: "text-purple-400",
+      borderHover: "hover:border-purple-500/50",
+      glow: "group-hover:shadow-purple-500/20",
+    },
+    emerald: {
+      iconBg: "bg-emerald-500/10",
+      iconColor: "text-emerald-400",
+      borderHover: "hover:border-emerald-500/50",
+      glow: "group-hover:shadow-emerald-500/20",
+    },
+    amber: {
+      iconBg: "bg-amber-500/10",
+      iconColor: "text-amber-400",
+      borderHover: "hover:border-amber-500/50",
+      glow: "group-hover:shadow-amber-500/20",
+    },
+    cyan: {
+      iconBg: "bg-cyan-500/10",
+      iconColor: "text-cyan-400",
+      borderHover: "hover:border-cyan-500/50",
+      glow: "group-hover:shadow-cyan-500/20",
+    },
+    rose: {
+      iconBg: "bg-rose-500/10",
+      iconColor: "text-rose-400",
+      borderHover: "hover:border-rose-500/50",
+      glow: "group-hover:shadow-rose-500/20",
+    },
+  };
+
+  const config = colorConfig[color];
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ scale: 1.02, y: -5 }}
-      className={`group relative overflow-hidden rounded-2xl ${className}`}
+      ref={ref}
+      initial={{ opacity: 0, y: 30 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+      transition={{ duration: 0.6, delay, ease: "easeOut" }}
+      className={`group relative ${large ? "md:col-span-2" : ""}`}
     >
-      {/* Animated gradient border */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
-      <div className="absolute inset-[1px] rounded-2xl bg-zinc-900/95 backdrop-blur-xl" />
-
-      {/* Hover glow effect */}
       <div
-        className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-2xl`}
-      />
+        className={`relative h-full p-6 rounded-3xl bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/80 ${config.borderHover} transition-all duration-500 ease-out group-hover:shadow-2xl ${config.glow} group-hover:-translate-y-1`}
+      >
+        {/* Icon */}
+        <div
+          className={`w-12 h-12 rounded-2xl ${config.iconBg} ${config.iconColor} flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110`}
+        >
+          <Icon size={24} strokeWidth={1.5} />
+        </div>
 
-      {/* Animated shine effect */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+        {/* Content */}
+        <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+        <p className="text-zinc-400 text-sm leading-relaxed">{description}</p>
+
+        {/* Subtle gradient overlay on hover */}
+        <div
+          className={`absolute inset-0 rounded-3xl bg-gradient-to-br from-${color}-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}
+        />
       </div>
-
-      {/* Content */}
-      <div className="relative z-10 h-full p-6">{children}</div>
-
-      {/* Border glow */}
-      <div className="absolute inset-0 rounded-2xl border border-zinc-800 group-hover:border-zinc-700 transition-colors duration-300" />
     </motion.div>
   );
 };
 
-// Icon wrapper with glow effect
-const GlowIcon = ({ icon: Icon, color = "blue" }) => {
-  const colorClasses = {
-    blue: "text-blue-400 bg-blue-500/10 group-hover:bg-blue-500/20 group-hover:shadow-blue-500/25",
-    purple:
-      "text-purple-400 bg-purple-500/10 group-hover:bg-purple-500/20 group-hover:shadow-purple-500/25",
-    pink: "text-pink-400 bg-pink-500/10 group-hover:bg-pink-500/20 group-hover:shadow-pink-500/25",
-    green:
-      "text-emerald-400 bg-emerald-500/10 group-hover:bg-emerald-500/20 group-hover:shadow-emerald-500/25",
-    orange:
-      "text-orange-400 bg-orange-500/10 group-hover:bg-orange-500/20 group-hover:shadow-orange-500/25",
-    cyan: "text-cyan-400 bg-cyan-500/10 group-hover:bg-cyan-500/20 group-hover:shadow-cyan-500/25",
-  };
+// Stats Component
+const StatItem = ({ value, label, delay }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
 
   return (
-    <div
-      className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:shadow-lg ${colorClasses[color]}`}
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+      transition={{ duration: 0.5, delay }}
+      className="text-center"
     >
-      <Icon size={28} strokeWidth={1.5} />
-    </div>
+      <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
+        {value}
+      </div>
+      <div className="text-zinc-500 text-sm mt-1">{label}</div>
+    </motion.div>
   );
 };
 
 function LandingPage() {
+  const featuresRef = useRef(null);
+
+  const features = [
+    {
+      icon: Video,
+      title: "HD Video Calls",
+      description:
+        "Crystal-clear video streaming powered by WebRTC. Experience face-to-face conversations with zero lag.",
+      color: "blue",
+      large: true,
+    },
+    {
+      icon: MessageSquare,
+      title: "Real-time Chat",
+      description:
+        "Send messages instantly while on video. Express yourself with text alongside your conversations.",
+      color: "purple",
+      large: false,
+    },
+    {
+      icon: ShieldCheck,
+      title: "Privacy First",
+      description:
+        "Your conversations are secure. We prioritize your privacy and safety above everything.",
+      color: "emerald",
+      large: false,
+    },
+    {
+      icon: Zap,
+      title: "Instant Connect",
+      description:
+        "Skip the waiting. Get matched with someone new in under 3 seconds.",
+      color: "amber",
+      large: false,
+    },
+    {
+      icon: Globe2,
+      title: "Global Community",
+      description:
+        "Connect with people from 195+ countries. Break barriers and explore cultures.",
+      color: "cyan",
+      large: false,
+    },
+    {
+      icon: Users,
+      title: "Active 24/7",
+      description:
+        "Thousands of users online at any time. There's always someone to talk to.",
+      color: "rose",
+      large: true,
+    },
+  ];
+
+  const scrollToFeatures = () => {
+    featuresRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <div className="min-h-screen bg-black" style={{ position: "relative" }}>
-      {/* Particle Background */}
-      <div
-        style={{
-          width: "100%",
-          height: "100vh",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          zIndex: 0,
-        }}
-      >
+    <div className="min-h-screen bg-zinc-950 overflow-x-hidden">
+      {/* Particle Background - Fixed */}
+      <div className="fixed inset-0 z-0">
         <Particles
-          particleColors={["#ffffff", "#ffffff", "#ffffff"]}
-          particleCount={200}
+          particleColors={["#3b82f6", "#8b5cf6", "#06b6d4"]}
+          particleCount={120}
           particleSpread={10}
-          speed={0.1}
-          particleBaseSize={100}
+          speed={0.05}
+          particleBaseSize={80}
           moveParticlesOnHover={true}
           alphaParticles={false}
           disableRotation={false}
         />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-20">
-        <div className="text-center max-w-5xl w-full">
-          {/* Logo/Title */}
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-7xl font-bold text-white mb-6"
-          >
-            Cider
-          </motion.h1>
+      {/* Gradient Overlay */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-zinc-950/50 via-zinc-950/80 to-zinc-950 pointer-events-none" />
 
-          {/* Tagline */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-2xl text-zinc-300 mb-4"
-          >
-            Connect with strangers around the world
-          </motion.p>
-
-          {/* Description */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-lg text-zinc-400 mb-12 max-w-2xl mx-auto"
-          >
-            Experience random video chat with people from anywhere. Start
-            conversations, make new friends, and explore different cultures -
-            all in real-time.
-          </motion.p>
-
-          {/* Magic Bento Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-12 auto-rows-[140px]">
-            {/* Video Chat - Large Card */}
-            <BentoCard
-              className="md:col-span-3 md:row-span-2"
-              delay={0.1}
-              gradient="from-blue-500/10 to-cyan-500/10"
-            >
-              <div className="flex flex-col h-full">
-                <GlowIcon icon={Video} color="blue" />
-                <div className="mt-auto">
-                  <h3 className="text-xl font-semibold text-white mb-2">
-                    Video Chat
-                  </h3>
-                  <p className="text-zinc-400 text-sm leading-relaxed">
-                    Crystal-clear HD video and audio streaming powered by
-                    WebRTC. Connect face-to-face with anyone, anywhere in the
-                    world instantly.
-                  </p>
-                </div>
-                {/* Decorative element */}
-                <div className="absolute top-6 right-6 w-24 h-24 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
-              </div>
-            </BentoCard>
-
-            {/* Text Chat - Medium Card */}
-            <BentoCard
-              className="md:col-span-3"
-              delay={0.2}
-              gradient="from-purple-500/10 to-pink-500/10"
-            >
-              <div className="flex items-center gap-4 h-full">
-                <GlowIcon icon={MessageCircle} color="purple" />
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">
-                    Text Chat
-                  </h3>
-                  <p className="text-zinc-400 text-sm">
-                    Real-time messaging alongside video
-                  </p>
-                </div>
-                {/* Decorative dots */}
-                <div className="absolute top-4 right-4 flex gap-1">
-                  <div className="w-2 h-2 rounded-full bg-purple-500/50 animate-pulse" />
-                  <div className="w-2 h-2 rounded-full bg-pink-500/50 animate-pulse delay-100" />
-                  <div className="w-2 h-2 rounded-full bg-purple-500/50 animate-pulse delay-200" />
-                </div>
-              </div>
-            </BentoCard>
-
-            {/* Secure - Medium Card */}
-            <BentoCard
-              className="md:col-span-3"
-              delay={0.3}
-              gradient="from-emerald-500/10 to-green-500/10"
-            >
-              <div className="flex items-center gap-4 h-full">
-                <GlowIcon icon={Shield} color="green" />
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">
-                    End-to-End Secure
-                  </h3>
-                  <p className="text-zinc-400 text-sm">
-                    Your privacy and safety matter to us
-                  </p>
-                </div>
-                {/* Shield animation */}
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Shield size={60} className="text-emerald-500" />
-                </div>
-              </div>
-            </BentoCard>
-
-            {/* Instant - Small Card */}
-            <BentoCard
-              className="md:col-span-2"
-              delay={0.4}
-              gradient="from-orange-500/10 to-amber-500/10"
-            >
-              <div className="flex flex-col justify-center h-full items-center text-center">
-                <GlowIcon icon={Zap} color="orange" />
-                <h3 className="text-lg font-semibold text-white mt-3">
-                  Lightning Fast
-                </h3>
-                <p className="text-zinc-500 text-xs mt-1">Connect in seconds</p>
-              </div>
-            </BentoCard>
-
-            {/* Global - Small Card */}
-            <BentoCard
-              className="md:col-span-2"
-              delay={0.5}
-              gradient="from-cyan-500/10 to-blue-500/10"
-            >
-              <div className="flex flex-col justify-center h-full items-center text-center">
-                <GlowIcon icon={Globe} color="cyan" />
-                <h3 className="text-lg font-semibold text-white mt-3">
-                  Global Reach
-                </h3>
-                <p className="text-zinc-500 text-xs mt-1">195+ countries</p>
-              </div>
-            </BentoCard>
-
-            {/* Community - Small Card */}
-            <BentoCard
-              className="md:col-span-2"
-              delay={0.6}
-              gradient="from-pink-500/10 to-rose-500/10"
-            >
-              <div className="flex flex-col justify-center h-full items-center text-center">
-                <GlowIcon icon={Users} color="pink" />
-                <h3 className="text-lg font-semibold text-white mt-3">
-                  Active Users
-                </h3>
-                <p className="text-zinc-500 text-xs mt-1">10K+ online now</p>
-              </div>
-            </BentoCard>
-          </div>
-
-          {/* CTA Button */}
+      {/* Hero Section */}
+      <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 pt-20">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.7 }}
+            transition={{ duration: 0.6 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-800/50 border border-zinc-700/50 text-zinc-300 text-sm mb-8"
+          >
+            <Sparkles size={14} className="text-amber-400" />
+            <span>New: Enhanced video quality</span>
+          </motion.div>
+
+          {/* Main Headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 tracking-tight"
+          >
+            Meet Anyone,
+            <br />
+            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+              Anywhere
+            </span>
+          </motion.h1>
+
+          {/* Subheadline */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-lg md:text-xl text-zinc-400 mb-10 max-w-2xl mx-auto leading-relaxed"
+          >
+            Connect with strangers from around the world through instant video
+            chat. Make new friends, practice languages, or just have fun — one
+            click away.
+          </motion.p>
+
+          {/* CTA Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
           >
             <SignInButton mode="modal">
-              <button className="group relative px-12 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xl font-bold rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/40 transform hover:scale-105 overflow-hidden">
-                {/* Button shine effect */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                <span className="relative">Get Started</span>
+              <button className="group relative px-8 py-4 bg-white text-zinc-900 font-semibold rounded-2xl transition-all duration-300 hover:shadow-2xl hover:shadow-white/20 hover:-translate-y-0.5 flex items-center gap-2">
+                Start Chatting
+                <ArrowRight
+                  size={18}
+                  className="transition-transform duration-300 group-hover:translate-x-1"
+                />
               </button>
             </SignInButton>
 
-            <p className="text-zinc-500 text-sm mt-6">
-              Sign in to start chatting with strangers
-            </p>
+            <button
+              onClick={scrollToFeatures}
+              className="px-8 py-4 text-zinc-300 font-medium rounded-2xl border border-zinc-700 hover:border-zinc-600 hover:bg-zinc-800/50 transition-all duration-300"
+            >
+              Learn More
+            </button>
+          </motion.div>
+
+          {/* Stats */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="grid grid-cols-3 gap-8 max-w-lg mx-auto"
+          >
+            <StatItem value="10K+" label="Online Now" delay={0.6} />
+            <StatItem value="195+" label="Countries" delay={0.7} />
+            <StatItem value="1M+" label="Connections" delay={0.8} />
           </motion.div>
         </div>
-      </div>
+
+        {/* Scroll Indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 1 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        >
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="w-6 h-10 rounded-full border-2 border-zinc-600 flex justify-center pt-2"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* Features Section */}
+      <section ref={featuresRef} className="relative z-10 py-24 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Section Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Everything you need to connect
+            </h2>
+            <p className="text-zinc-400 max-w-xl mx-auto">
+              Simple, fast, and secure. We've built the features that matter
+              most.
+            </p>
+          </motion.div>
+
+          {/* Bento Grid - Row 1 */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <FeatureCard {...features[0]} delay={0.1} />
+            <FeatureCard {...features[1]} delay={0.2} />
+            <FeatureCard {...features[2]} delay={0.3} />
+          </div>
+
+          {/* Bento Grid - Row 2 */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <FeatureCard {...features[3]} delay={0.4} />
+            <FeatureCard {...features[4]} delay={0.5} />
+            <FeatureCard {...features[5]} delay={0.6} />
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="relative z-10 py-24 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="p-8 md:p-12 rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-900/50 border border-zinc-800"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Ready to start?
+            </h2>
+            <p className="text-zinc-400 mb-8 max-w-md mx-auto">
+              Join thousands of users already connecting on Cider. It only takes
+              a few seconds to get started.
+            </p>
+            <SignInButton mode="modal">
+              <button className="group px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-2xl transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/25 hover:-translate-y-0.5 flex items-center gap-2 mx-auto">
+                Get Started Free
+                <ArrowRight
+                  size={18}
+                  className="transition-transform duration-300 group-hover:translate-x-1"
+                />
+              </button>
+            </SignInButton>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-zinc-800/50 bg-zinc-950/80 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            {/* Brand */}
+            <div className="md:col-span-2">
+              <h3 className="text-2xl font-bold text-white mb-3">Cider</h3>
+              <p className="text-zinc-400 text-sm leading-relaxed max-w-sm">
+                Connect with strangers from around the world. Video chat made
+                simple, fast, and secure.
+              </p>
+            </div>
+
+            {/* Links */}
+            <div>
+              <h4 className="text-white font-medium mb-4">Product</h4>
+              <ul className="space-y-2">
+                <li>
+                  <a
+                    href="#"
+                    className="text-zinc-400 text-sm hover:text-white transition-colors"
+                  >
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-zinc-400 text-sm hover:text-white transition-colors"
+                  >
+                    Security
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-zinc-400 text-sm hover:text-white transition-colors"
+                  >
+                    FAQ
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-medium mb-4">Legal</h4>
+              <ul className="space-y-2">
+                <li>
+                  <a
+                    href="#"
+                    className="text-zinc-400 text-sm hover:text-white transition-colors"
+                  >
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-zinc-400 text-sm hover:text-white transition-colors"
+                  >
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-zinc-400 text-sm hover:text-white transition-colors"
+                  >
+                    Guidelines
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom */}
+          <div className="pt-8 border-t border-zinc-800/50 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-zinc-500 text-sm flex items-center gap-1">
+              Made with <Heart size={14} className="text-rose-500" /> for
+              connecting people
+            </p>
+
+            <div className="flex items-center gap-4">
+              <a
+                href="#"
+                className="text-zinc-400 hover:text-white transition-colors"
+              >
+                <Twitter size={20} />
+              </a>
+              <a
+                href="#"
+                className="text-zinc-400 hover:text-white transition-colors"
+              >
+                <Github size={20} />
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
