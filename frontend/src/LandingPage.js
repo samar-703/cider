@@ -100,24 +100,42 @@ const FeatureCard = ({
   );
 };
 
-// Stats Component
-const StatItem = ({ value, label, delay }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true });
+// Marquee Stats Component - Digital Display Style
+const StatItem = ({ value, label, isLive = false, color = "blue" }) => {
+  const colorClasses = {
+    blue: "from-blue-400 to-cyan-400",
+    purple: "from-purple-400 to-pink-400",
+    green: "from-emerald-400 to-green-400",
+    amber: "from-amber-400 to-orange-400",
+  };
 
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-      transition={{ duration: 0.5, delay }}
-      className="text-center"
-    >
-      <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
-        {value}
+    <div className="relative group flex-shrink-0 w-[240px]">
+      <div className="text-center p-6 rounded-2xl bg-zinc-900/40 backdrop-blur-sm border border-zinc-800/60 transition-all duration-300 group-hover:border-zinc-700 group-hover:bg-zinc-900/60 h-full">
+        {isLive && (
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <motion.div
+              animate={{ scale: [1, 1.2, 1], opacity: [1, 0.6, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="w-2 h-2 rounded-full bg-emerald-400"
+            />
+            <span className="text-emerald-400 text-xs font-medium uppercase tracking-wide">
+              Live
+            </span>
+          </div>
+        )}
+        <div
+          className={`text-4xl md:text-5xl font-bold bg-gradient-to-r ${colorClasses[color]} bg-clip-text text-transparent mb-2`}
+        >
+          {value}
+        </div>
+        <div className="text-zinc-400 text-sm font-medium">{label}</div>
       </div>
-      <div className="text-zinc-500 text-sm mt-1">{label}</div>
-    </motion.div>
+      {/* Subtle glow */}
+      <div
+        className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${colorClasses[color]} opacity-0 group-hover:opacity-10 blur-xl transition-opacity duration-300 -z-10`}
+      />
+    </div>
   );
 };
 
@@ -184,11 +202,11 @@ function LandingPage() {
       {/* Particle Background - Fixed */}
       <div className="fixed inset-0 z-0">
         <Particles
-          particleColors={["#3b82f6", "#8b5cf6", "#06b6d4"]}
-          particleCount={120}
-          particleSpread={10}
-          speed={0.05}
-          particleBaseSize={80}
+          particleColors={["#60a5fa", "#a78bfa", "#22d3ee"]}
+          particleCount={180}
+          particleSpread={12}
+          speed={0.09}
+          particleBaseSize={160}
           moveParticlesOnHover={true}
           alphaParticles={false}
           disableRotation={false}
@@ -196,7 +214,7 @@ function LandingPage() {
       </div>
 
       {/* Gradient Overlay */}
-      <div className="fixed inset-0 z-0 bg-gradient-to-b from-zinc-950/50 via-zinc-950/80 to-zinc-950 pointer-events-none" />
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-zinc-950/30 via-zinc-950/60 to-zinc-950/90 pointer-events-none" />
 
       {/* Hero Section */}
       <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 pt-20">
@@ -234,8 +252,7 @@ function LandingPage() {
             className="text-lg md:text-xl text-zinc-400 mb-10 max-w-2xl mx-auto leading-relaxed"
           >
             Connect with strangers from around the world through instant video
-            chat. Make new friends just one
-            click away.
+            chat. Make new friends just one click away.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -263,16 +280,60 @@ function LandingPage() {
             </button>
           </motion.div>
 
-          {/* Stats */}
+          {/* Horizontal Scrolling Stats Ticker */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="grid grid-cols-3 gap-8 max-w-lg mx-auto"
+            className="w-full mt-12 overflow-hidden"
           >
-            <StatItem value="10K+" label="Online Now" delay={0.6} />
-            <StatItem value="195+" label="Countries" delay={0.7} />
-            <StatItem value="1M+" label="Connections" delay={0.8} />
+            <div className="relative">
+              {/* Fade edges */}
+              <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-zinc-950 to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-zinc-950 to-transparent z-10 pointer-events-none" />
+
+              {/* Scrolling container */}
+              <motion.div
+                className="flex gap-4"
+                animate={{
+                  x: ["-0%", "-50%"],
+                }}
+                transition={{
+                  x: {
+                    repeat: Infinity,
+                    repeatType: "loop",
+                    duration: 10,
+                    ease: "linear",
+                  },
+                }}
+              >
+                {/* First set of stats */}
+                <StatItem
+                  value="10K+"
+                  label="Online Now"
+                  isLive={false}
+                  color="green"
+                />
+                <StatItem value="195+" label="Countries" color="blue" />
+                <StatItem value="1M+" label="Total Chats" color="purple" />
+                <StatItem value="50K+" label="Daily Users" color="amber" />
+                <StatItem value="24/7" label="Always Active" color="blue" />
+                <StatItem value="<3s" label="Avg. Match Time" color="purple" />
+
+                {/* Duplicate set for seamless loop */}
+                <StatItem
+                  value="10K+"
+                  label="Online Now"
+                  isLive={true}
+                  color="green"
+                />
+                <StatItem value="195+" label="Countries" color="blue" />
+                <StatItem value="1M+" label="Total Chats" color="purple" />
+                <StatItem value="50K+" label="Daily Users" color="amber" />
+                <StatItem value="24/7" label="Always Active" color="blue" />
+                <StatItem value="<3s" label="Avg. Match Time" color="purple" />
+              </motion.div>
+            </div>
           </motion.div>
         </div>
       </section>
