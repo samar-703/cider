@@ -382,7 +382,7 @@ function LandingPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="p-8 md:p-12 rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-900/50 border border-zinc-800"
+            className="p-8 md:p-12 rounded-3xl"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Ready to start?
