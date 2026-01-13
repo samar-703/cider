@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import io from "socket.io-client";
-import { Video, VideoOff, Send, SkipForward, Power } from "lucide-react";
+import {
+  Video,
+  VideoOff,
+  Send,
+  SkipForward,
+  Power,
+  Menu,
+  User,
+  Palette,
+  UserCircle,
+  Settings,
+  X,
+} from "lucide-react";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import Particles from "./Particles";
 import LandingPage from "./LandingPage";
@@ -15,7 +27,7 @@ const ICE_SERVERS = {
     { urls: "stun:stun2.l.google.com:19302" },
     { urls: "stun:stun3.l.google.com:19302" },
     { urls: "stun:stun4.l.google.com:19302" },
-    
+
     {
       urls: "turn:openrelay.metered.ca:80",
       username: "openrelayproject",
@@ -42,6 +54,7 @@ function Cider() {
   const [inputMessage, setInputMessage] = useState("");
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [partnerId, setPartnerId] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -55,7 +68,7 @@ function Cider() {
   // Cleanup function for peer connection
   const cleanupPeerConnection = useCallback(() => {
     console.log("🧹 Cleaning up peer connection");
-    
+
     if (peerConnectionRef.current) {
       peerConnectionRef.current.ontrack = null;
       peerConnectionRef.current.onicecandidate = null;
@@ -78,7 +91,7 @@ function Cider() {
   // Create peer connection with all handlers
   const createPeerConnection = useCallback((socketInstance) => {
     console.log("🔧 Creating new peer connection");
-    
+
     const pc = new RTCPeerConnection(ICE_SERVERS);
     peerConnectionRef.current = pc;
 
@@ -86,13 +99,13 @@ function Cider() {
     pc.ontrack = (event) => {
       console.log("🎥 ontrack fired!", event.track.kind);
       console.log("   Streams count:", event.streams?.length);
-      
+
       if (remoteVideoRef.current && event.streams && event.streams[0]) {
         console.log("   ✅ Setting remote video srcObject");
         remoteVideoRef.current.srcObject = event.streams[0];
-        
+
         // Force play
-        remoteVideoRef.current.play().catch(err => {
+        remoteVideoRef.current.play().catch((err) => {
           console.log("   ⚠️ Play error (usually ok):", err.message);
         });
       }
@@ -130,10 +143,16 @@ function Cider() {
     // Add local tracks to peer connection
     if (localStreamRef.current) {
       const tracks = localStreamRef.current.getTracks();
-      console.log("➕ Adding local tracks to peer connection:", tracks.map(t => `${t.kind} (${t.id.slice(0,8)})`));
+      console.log(
+        "➕ Adding local tracks to peer connection:",
+        tracks.map((t) => `${t.kind} (${t.id.slice(0, 8)})`)
+      );
       tracks.forEach((track) => {
         const sender = pc.addTrack(track, localStreamRef.current);
-        console.log(`   ✅ Added ${track.kind} track, sender:`, sender ? 'OK' : 'FAILED');
+        console.log(
+          `   ✅ Added ${track.kind} track, sender:`,
+          sender ? "OK" : "FAILED"
+        );
       });
     } else {
       console.error("❌ No local stream available to add tracks!");
@@ -154,14 +173,17 @@ function Cider() {
         video: true,
         audio: true,
       });
-      
+
       localStreamRef.current = stream;
-      
+
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
-      
-      console.log("✅ Got local stream with tracks:", stream.getTracks().map(t => t.kind));
+
+      console.log(
+        "✅ Got local stream with tracks:",
+        stream.getTracks().map((t) => t.kind)
+      );
       return stream;
     } catch (err) {
       console.error("❌ Failed to get local stream:", err);
@@ -178,8 +200,10 @@ function Cider() {
     const pc = peerConnectionRef.current;
     if (!pc || !pc.remoteDescription) return;
 
-    console.log(`🧊 Processing ${iceCandidateQueueRef.current.length} queued ICE candidates`);
-    
+    console.log(
+      `🧊 Processing ${iceCandidateQueueRef.current.length} queued ICE candidates`
+    );
+
     while (iceCandidateQueueRef.current.length > 0) {
       const candidate = iceCandidateQueueRef.current.shift();
       try {
@@ -224,7 +248,9 @@ function Cider() {
     });
 
     newSocket.on("partner-found", async ({ partnerId: pid, isOfferer }) => {
-      console.log(`🎯 Partner found! I am ${isOfferer ? "OFFERER" : "ANSWERER"}`);
+      console.log(
+        `🎯 Partner found! I am ${isOfferer ? "OFFERER" : "ANSWERER"}`
+      );
       setStatus("connected");
       setPartnerId(pid);
       setMessages((prev) => [
@@ -241,7 +267,7 @@ function Cider() {
         } else {
           console.log("✅ Local stream already available");
         }
-        
+
         console.log("🔧 Creating peer connection with local tracks");
         const pc = createPeerConnection(newSocket);
 
@@ -250,20 +276,20 @@ function Cider() {
           console.log("📤 I am OFFERER - creating and sending offer");
           console.log("📊 My senders before offer:", pc.getSenders().length);
           makingOfferRef.current = true;
-          
+
           const offer = await pc.createOffer({
             offerToReceiveAudio: true,
             offerToReceiveVideo: true,
           });
-          
+
           await pc.setLocalDescription(offer);
           console.log("📤 Sending offer to answerer");
           console.log("📊 Offer SDP includes:", {
-            audio: offer.sdp.includes('m=audio'),
-            video: offer.sdp.includes('m=video')
+            audio: offer.sdp.includes("m=audio"),
+            video: offer.sdp.includes("m=video"),
           });
           newSocket.emit("offer", { offer: pc.localDescription });
-          
+
           makingOfferRef.current = false;
         } else {
           console.log("📥 I am ANSWERER - waiting for offer from offerer");
@@ -276,52 +302,62 @@ function Cider() {
     newSocket.on("offer", async ({ offer, from }) => {
       console.log("📥 Received offer from:", from);
       console.log("📊 Offer SDP includes:", {
-        audio: offer.sdp?.includes('m=audio'),
-        video: offer.sdp?.includes('m=video')
+        audio: offer.sdp?.includes("m=audio"),
+        video: offer.sdp?.includes("m=video"),
       });
-      
+
       try {
         const pc = peerConnectionRef.current;
-        
+
         if (!pc) {
-          console.error("❌ No peer connection exists! This should not happen.");
+          console.error(
+            "❌ No peer connection exists! This should not happen."
+          );
           console.log("⚠️ Creating emergency peer connection");
           await getLocalStream();
           createPeerConnection(newSocket);
         }
 
         const currentPc = peerConnectionRef.current;
-        
+
         console.log(`Peer connection state: ${currentPc.signalingState}`);
         console.log(`Local tracks (senders): ${currentPc.getSenders().length}`);
-        console.log(`Senders details:`, currentPc.getSenders().map(s => s.track?.kind));
-        
+        console.log(
+          `Senders details:`,
+          currentPc.getSenders().map((s) => s.track?.kind)
+        );
+
         // Handle glare (both sides trying to negotiate)
-        const offerCollision = makingOfferRef.current || currentPc.signalingState !== "stable";
-        
+        const offerCollision =
+          makingOfferRef.current || currentPc.signalingState !== "stable";
+
         if (offerCollision) {
-          console.log("Offer collision detected, ignoring (I should be answerer)");
+          console.log(
+            "Offer collision detected, ignoring (I should be answerer)"
+          );
           return;
         }
 
         console.log("Setting remote description (offer)");
         await currentPc.setRemoteDescription(new RTCSessionDescription(offer));
-        
+
         // Process any queued ICE candidates
         await processIceCandidateQueue();
-        
+
         console.log("Creating answer");
         const answer = await currentPc.createAnswer();
         console.log("Answer SDP includes:", {
-          audio: answer.sdp.includes('m=audio'),
-          video: answer.sdp.includes('m=video')
+          audio: answer.sdp.includes("m=audio"),
+          video: answer.sdp.includes("m=video"),
         });
         await currentPc.setLocalDescription(answer);
-        
+
         console.log("Sending answer to offerer");
-        console.log("Transceivers after answer:", currentPc.getTransceivers().map(t => `${t.mid}: ${t.direction}`));
+        console.log(
+          "Transceivers after answer:",
+          currentPc.getTransceivers().map((t) => `${t.mid}: ${t.direction}`)
+        );
         newSocket.emit("answer", { answer: currentPc.localDescription });
-        
       } catch (err) {
         console.error("Error handling offer:", err);
       }
@@ -330,13 +366,13 @@ function Cider() {
     newSocket.on("answer", async ({ answer }) => {
       console.log("Received answer");
       console.log("Answer SDP includes:", {
-        audio: answer.sdp?.includes('m=audio'),
-        video: answer.sdp?.includes('m=video')
+        audio: answer.sdp?.includes("m=audio"),
+        video: answer.sdp?.includes("m=video"),
       });
-      
+
       try {
         const pc = peerConnectionRef.current;
-        
+
         if (!pc) {
           console.error("No peer connection when receiving answer");
           return;
@@ -344,17 +380,23 @@ function Cider() {
 
         console.log("Current signaling state:", pc.signalingState);
         if (pc.signalingState !== "have-local-offer") {
-          console.error("Not in have-local-offer state, current state:", pc.signalingState);
+          console.error(
+            "Not in have-local-offer state, current state:",
+            pc.signalingState
+          );
           return;
         }
 
         console.log("Setting remote description (answer)");
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
-        
+
         await processIceCandidateQueue();
-        
+
         console.log("Answer applied successfully");
-        console.log("Transceivers:", pc.getTransceivers().map(t => `${t.mid}: ${t.direction}`));
+        console.log(
+          "Transceivers:",
+          pc.getTransceivers().map((t) => `${t.mid}: ${t.direction}`)
+        );
       } catch (err) {
         console.error("Error handling answer:", err);
       }
@@ -364,7 +406,7 @@ function Cider() {
       if (!candidate) return;
 
       const pc = peerConnectionRef.current;
-      
+
       if (!pc) {
         console.log("Queueing ICE candidate (no peer connection yet)");
         iceCandidateQueueRef.current.push(candidate);
@@ -401,14 +443,20 @@ function Cider() {
       cleanupPeerConnection();
       newSocket.close();
     };
-  }, [getLocalStream, createPeerConnection, processIceCandidateQueue, handlePartnerDisconnect, cleanupPeerConnection]);
+  }, [
+    getLocalStream,
+    createPeerConnection,
+    processIceCandidateQueue,
+    handlePartnerDisconnect,
+    cleanupPeerConnection,
+  ]);
 
   const startChat = async () => {
     if (socket && status === "disconnected") {
       console.log("▶️ Starting chat");
       setMessages([]);
       cleanupPeerConnection();
-      
+
       // Request camera access immediately so user sees their video while waiting
       try {
         await getLocalStream();
@@ -417,11 +465,14 @@ function Cider() {
         console.error("❌ Failed to start camera:", err);
         setMessages((prev) => [
           ...prev,
-          { text: "Failed to access camera. Please allow camera permissions.", type: "system" },
+          {
+            text: "Failed to access camera. Please allow camera permissions.",
+            type: "system",
+          },
         ]);
         return; // Don't search for partner if camera fails
       }
-      
+
       socket.emit("find-partner");
     }
   };
@@ -470,10 +521,22 @@ function Cider() {
       </SignedOut>
 
       <SignedIn>
-        <div className="min-h-screen bg-black p-4 pt-20" style={{ position: 'relative' }}>
-          <div style={{ width: '100%', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 0 }}>
+        <div
+          className="min-h-screen bg-black p-4 pt-20"
+          style={{ position: "relative" }}
+        >
+          <div
+            style={{
+              width: "100%",
+              height: "100vh",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              zIndex: 0,
+            }}
+          >
             <Particles
-              particleColors={['#ffffff', '#ffffff', '#ffffff']}
+              particleColors={["#ffffff", "#ffffff", "#ffffff"]}
               particleCount={200}
               particleSpread={10}
               speed={0.2}
@@ -483,10 +546,96 @@ function Cider() {
               disableRotation={false}
             />
           </div>
-          
-          <div className="max-w-7xl mx-auto" style={{ position: 'relative', zIndex: 1 }}>
-            <h1 className="text-5xl font-semibold text-white text-center mb-8 mt-2">
-            </h1>
+
+          {/* Sidebar Toggle Button */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="fixed left-4 top-24 z-50 p-3 bg-gradient-to-br from-purple-500/10 to-indigo-600/10 backdrop-blur-sm border border-purple-500/30 text-purple-400 rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-500/20 hover:border-purple-400/50 active:scale-95"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+
+          {/* Sidebar Overlay */}
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
+          {/* Sidebar Panel */}
+          <div
+            className={`fixed left-0 top-0 h-full w-80 bg-zinc-900/95 backdrop-blur-md border-r border-zinc-800 z-50 transform transition-transform duration-300 ease-in-out ${
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <div className="flex flex-col h-full p-6">
+              {/* Close Button */}
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              {/* Logo/Title */}
+              <div className="mb-8 mt-2">
+                <h2 className="text-2xl font-bold text-white">Menu</h2>
+              </div>
+
+              {/* Menu Items */}
+              <nav className="flex-1 space-y-2">
+                <button
+                  onClick={() => {
+                    /* TODO: Add functionality */
+                  }}
+                  className="w-full flex items-center gap-4 px-4 py-3 text-left text-zinc-300 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-all duration-200 group"
+                >
+                  <UserCircle className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
+                  <span className="font-medium">Create Your Avatar</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    /* TODO: Add functionality */
+                  }}
+                  className="w-full flex items-center gap-4 px-4 py-3 text-left text-zinc-300 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-all duration-200 group"
+                >
+                  <Palette className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
+                  <span className="font-medium">Personalization</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    /* TODO: Add functionality */
+                  }}
+                  className="w-full flex items-center gap-4 px-4 py-3 text-left text-zinc-300 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-all duration-200 group"
+                >
+                  <User className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
+                  <span className="font-medium">My Account</span>
+                </button>
+              </nav>
+
+              {/* Settings at Bottom */}
+              <div className="border-t border-zinc-800 pt-4">
+                <button
+                  onClick={() => {
+                    /* TODO: Add functionality */
+                  }}
+                  className="w-full flex items-center gap-4 px-4 py-3 text-left text-zinc-300 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-all duration-200 group"
+                >
+                  <Settings className="w-5 h-5 transition-transform duration-200 group-hover:rotate-90" />
+                  <span className="font-medium">Settings</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="max-w-7xl mx-auto"
+            style={{ position: "relative", zIndex: 1 }}
+          >
+            <h1 className="text-5xl font-semibold text-white text-center mb-8 mt-2"></h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Video Section */}
