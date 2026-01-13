@@ -514,7 +514,10 @@ function Cider() {
 
   return (
     <>
-      <Navbar />
+      <Navbar
+        onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+        showMenuButton={true}
+      />
 
       <SignedOut>
         <LandingPage />
@@ -546,14 +549,6 @@ function Cider() {
               disableRotation={false}
             />
           </div>
-
-          {/* Sidebar Toggle Button */}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="fixed left-4 top-24 z-50 p-3 bg-gradient-to-br from-purple-500/10 to-indigo-600/10 backdrop-blur-sm border border-purple-500/30 text-purple-400 rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-500/20 hover:border-purple-400/50 active:scale-95"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
 
           {/* Sidebar Overlay */}
           {sidebarOpen && (
