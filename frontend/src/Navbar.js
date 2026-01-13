@@ -13,7 +13,7 @@ function Navbar({ onMenuClick, showMenuButton = false }) {
           {showMenuButton && (
             <button
               onClick={onMenuClick}
-              className="p-2 bg-gradient-to-br from-purple-500/10 to-indigo-600/10 backdrop-blur-sm border border-purple-500/30 text-purple-400 rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-500/20 hover:border-purple-400/50 active:scale-95"
+              className="p-2 bg-gradient-to-br from-purple-500/10 to-indigo-600/10 backdrop-blur-sm border text-purple-400 rounded-lg transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-500/20 hover:border-purple-400/50 active:scale-95"
             >
               <Menu className="w-5 h-5" />
             </button>
