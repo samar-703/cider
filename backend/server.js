@@ -112,15 +112,21 @@ io.on("connection", (socket) => {
 
   socket.on("typing", () => {
     const partnerId = activeConnections.get(socket.id);
+    console.log(`⌨️  ${socket.id} is typing, partner: ${partnerId}`);
     if (partnerId) {
       io.to(partnerId).emit("partner-typing");
+      console.log(`✅ Sent partner-typing to ${partnerId}`);
+    } else {
+      console.log(`❌ No partner found for ${socket.id}`);
     }
   });
 
   socket.on("stop-typing", () => {
     const partnerId = activeConnections.get(socket.id);
+    console.log(`🛑 ${socket.id} stopped typing, partner: ${partnerId}`);
     if (partnerId) {
       io.to(partnerId).emit("partner-stop-typing");
+      console.log(`✅ Sent partner-stop-typing to ${partnerId}`);
     }
   });
 

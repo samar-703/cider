@@ -222,6 +222,7 @@ function Cider() {
     console.log("👋 Partner disconnected");
     setStatus("disconnected");
     setPartnerId(null);
+    setPartnerTyping(false);
     setMessages((prev) => [
       ...prev,
       { text: "Stranger disconnected", type: "system" },
@@ -435,11 +436,14 @@ function Cider() {
     newSocket.on("partner-disconnected", () => {
       handlePartnerDisconnect();
     });
+
     newSocket.on("partner-typing", () => {
+      console.log("👀 Partner is typing!");
       setPartnerTyping(true);
     });
 
     newSocket.on("partner-stop-typing", () => {
+      console.log("👀 Partner stopped typing!");
       setPartnerTyping(false);
     });
     return () => {
@@ -459,10 +463,26 @@ function Cider() {
     cleanupPeerConnection,
   ]);
 
+  const clearTypingTimeout = useCallback(() => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+  }, []);
+
+  const emitStopTyping = useCallback(() => {
+    clearTypingTimeout();
+    if (socketRef.current) {
+      console.log("🛑 Emitting stop-typing");
+      socketRef.current.emit("stop-typing");
+    }
+  }, [clearTypingTimeout]);
+
   const startChat = async () => {
     if (socket && status === "disconnected") {
       console.log("▶️ Starting chat");
       setMessages([]);
+      setPartnerTyping(false);
       cleanupPeerConnection();
 
       // Request camera access immediately so user sees their video while waiting
@@ -488,6 +508,8 @@ function Cider() {
   const nextChat = () => {
     if (socket) {
       console.log("⏭️ Next chat");
+      setPartnerTyping(false);
+      emitStopTyping();
       socket.emit("disconnect-chat");
       handlePartnerDisconnect();
       setTimeout(() => startChat(), 500);
@@ -497,6 +519,8 @@ function Cider() {
   const stopChat = () => {
     if (socket) {
       console.log("⏹️ Stop chat");
+      setPartnerTyping(false);
+      emitStopTyping();
       socket.emit("disconnect-chat");
       handlePartnerDisconnect();
     }
@@ -506,35 +530,46 @@ function Cider() {
     const value = e.target.value;
     setInputMessage(value);
 
-    if (socket && status === "connected") {
+    if (socketRef.current && status === "connected") {
+      console.log("⌨️ User is typing, emitting typing event");
       // Emit typing event
-      socket.emit("typing");
+      socketRef.current.emit("typing");
 
-      // Clear existing timeout
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-
-      // Set new timeout to emit stop-typing after 1.5 seconds of inactivity
+      // Clear existing timeout and set a fresh one for inactivity
+      clearTypingTimeout();
       typingTimeoutRef.current = setTimeout(() => {
-        socket.emit("stop-typing");
-      }, 1500);
+        console.log("⏱️ Typing timeout reached, stopping typing indicator");
+        if (socketRef.current) {
+          socketRef.current.emit("stop-typing");
+        }
+      }, 1200);
     }
   };
 
   const sendMessage = () => {
     if (inputMessage.trim() && socket && status === "connected") {
       // Clear typing timeout and emit stop-typing immediately
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-      socket.emit("stop-typing");
+      emitStopTyping();
 
-      socket.emit("chat-message", { message: inputMessage });
+      (socketRef.current || socket)?.emit("chat-message", {
+        message: inputMessage,
+      });
       setMessages((prev) => [...prev, { text: inputMessage, type: "you" }]);
       setInputMessage("");
     }
   };
+
+  useEffect(() => {
+    return () => {
+      // Make sure remote stops seeing typing when this component unmounts
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      if (socketRef.current) {
+        socketRef.current.emit("stop-typing");
+      }
+    };
+  }, []);
 
   const toggleVideo = () => {
     if (localStreamRef.current) {
@@ -788,6 +823,7 @@ function Cider() {
                     <div className="p-3 rounded-lg bg-zinc-800 text-zinc-400 mr-auto max-w-[80%] animate-pulse">
                       <div className="text-xs opacity-75 mb-1">Stranger</div>
                       <div className="flex items-center gap-1">
+                        <span className="text-sm">typing</span>
                         <span
                           className="typing-dot"
                           style={{ animationDelay: "0ms" }}
