@@ -78,3 +78,23 @@ a:focus-visible {
   outline: 2px solid #8b5cf6;
   outline-offset: 2px;
 }
+
+/* Typing indicator animation */
+.typing-dot {
+  display: inline-block;
+  font-size: 24px;
+  line-height: 1;
+  animation: typingDot 1.4s infinite;
+  opacity: 0;
+}
+
+@keyframes typingDot {
+  0%,
+  60%,
+  100% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+}
