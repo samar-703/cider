@@ -55,6 +55,7 @@ function Cider() {
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [partnerId, setPartnerId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [partnerTyping, setPartnerTyping] = useState(false);
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -64,6 +65,7 @@ function Cider() {
   const iceCandidateQueueRef = useRef([]);
   const isNegotiatingRef = useRef(false);
   const makingOfferRef = useRef(false);
+  const typingTimeoutRef = useRef(null);
 
   // Cleanup function for peer connection
   const cleanupPeerConnection = useCallback(() => {
@@ -433,7 +435,13 @@ function Cider() {
     newSocket.on("partner-disconnected", () => {
       handlePartnerDisconnect();
     });
+    newSocket.on("partner-typing", () => {
+      setPartnerTyping(true);
+    });
 
+    newSocket.on("partner-stop-typing", () => {
+      setPartnerTyping(false);
+    });
     return () => {
       console.log("🔌 Disconnecting socket");
       if (localStreamRef.current) {
@@ -494,8 +502,34 @@ function Cider() {
     }
   };
 
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setInputMessage(value);
+
+    if (socket && status === "connected") {
+      // Emit typing event
+      socket.emit("typing");
+
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      // Set new timeout to emit stop-typing after 1.5 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        socket.emit("stop-typing");
+      }, 1500);
+    }
+  };
+
   const sendMessage = () => {
     if (inputMessage.trim() && socket && status === "connected") {
+      // Clear typing timeout and emit stop-typing immediately
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      socket.emit("stop-typing");
+
       socket.emit("chat-message", { message: inputMessage });
       setMessages((prev) => [...prev, { text: inputMessage, type: "you" }]);
       setInputMessage("");
@@ -748,6 +782,33 @@ function Cider() {
                       {msg.text}
                     </div>
                   ))}
+
+                  {/* Typing Indicator */}
+                  {partnerTyping && status === "connected" && (
+                    <div className="p-3 rounded-lg bg-zinc-800 text-zinc-400 mr-auto max-w-[80%] animate-pulse">
+                      <div className="text-xs opacity-75 mb-1">Stranger</div>
+                      <div className="flex items-center gap-1">
+                        <span
+                          className="typing-dot"
+                          style={{ animationDelay: "0ms" }}
+                        >
+                          .
+                        </span>
+                        <span
+                          className="typing-dot"
+                          style={{ animationDelay: "200ms" }}
+                        >
+                          .
+                        </span>
+                        <span
+                          className="typing-dot"
+                          style={{ animationDelay: "400ms" }}
+                        >
+                          .
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Input */}
@@ -755,7 +816,7 @@ function Cider() {
                   <input
                     type="text"
                     value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
+                    onChange={handleInputChange}
                     onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                     placeholder="Type a message..."
                     disabled={status !== "connected"}
