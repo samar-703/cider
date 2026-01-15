@@ -33,37 +33,37 @@ const FeatureCard = ({
       iconBg: "bg-blue-500/10",
       iconColor: "text-blue-400",
       borderHover: "hover:border-blue-500/50",
-      glow: "group-hover:shadow-blue-500/20",
+      glow: "group-hover:shadow-blue-500/50",
     },
     purple: {
       iconBg: "bg-purple-500/10",
       iconColor: "text-purple-400",
       borderHover: "hover:border-purple-500/50",
-      glow: "group-hover:shadow-purple-500/20",
+      glow: "group-hover:shadow-purple-500/50",
     },
     emerald: {
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-400",
       borderHover: "hover:border-emerald-500/50",
-      glow: "group-hover:shadow-emerald-500/20",
+      glow: "group-hover:shadow-emerald-500/50",
     },
     amber: {
       iconBg: "bg-amber-500/10",
       iconColor: "text-amber-400",
       borderHover: "hover:border-amber-500/50",
-      glow: "group-hover:shadow-amber-500/20",
+      glow: "group-hover:shadow-amber-500/50",
     },
     cyan: {
       iconBg: "bg-cyan-500/10",
       iconColor: "text-cyan-400",
       borderHover: "hover:border-cyan-500/50",
-      glow: "group-hover:shadow-cyan-500/20",
+      glow: "group-hover:shadow-cyan-500/50",
     },
     rose: {
       iconBg: "bg-rose-500/10",
       iconColor: "text-rose-400",
       borderHover: "hover:border-rose-500/50",
-      glow: "group-hover:shadow-rose-500/20",
+      glow: "group-hover:shadow-rose-500/50",
     },
   };
 
@@ -93,7 +93,7 @@ const FeatureCard = ({
 
         {/* Subtle gradient overlay on hover */}
         <div
-          className={`absolute inset-0 rounded-3xl bg-gradient-to-br from-${color}-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}
+          className={`absolute inset-0 rounded-3xl bg-gradient-to-br from-${color}-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}
         />
       </div>
     </motion.div>
