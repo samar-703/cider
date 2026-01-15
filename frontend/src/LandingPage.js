@@ -482,8 +482,7 @@ function LandingPage() {
           {/* Bottom */}
           <div className="pt-8 border-t border-zinc-800/50 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-zinc-500 text-sm flex items-center gap-1">
-              Made with <Heart size={14} className="text-rose-500" /> for
-              connecting people
+              Made by Samar
             </p>
 
             <div className="flex items-center gap-4">
