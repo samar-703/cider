@@ -12,6 +12,7 @@ import {
   UserCircle,
   Settings,
   X,
+  ChevronDown,
 } from "lucide-react";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import Particles from "./Particles";
@@ -66,6 +67,11 @@ function Cider() {
   const isNegotiatingRef = useRef(false);
   const makingOfferRef = useRef(false);
   const typingTimeoutRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const prevMessagesLengthRef = useRef(0);
 
   // Cleanup function for peer connection
   const cleanupPeerConnection = useCallback(() => {
@@ -431,6 +437,22 @@ function Cider() {
 
     newSocket.on("chat-message", ({ message }) => {
       setMessages((prev) => [...prev, { text: message, type: "stranger" }]);
+      // Increment unread count if user is scrolled up
+      setUnreadCount((prev) => {
+        // We check isUserScrolledUp via ref to avoid stale closure
+        const container = messagesContainerRef.current;
+        if (container) {
+          const isScrolledUp =
+            container.scrollHeight -
+              container.scrollTop -
+              container.clientHeight >
+            100;
+          if (isScrolledUp) {
+            return prev + 1;
+          }
+        }
+        return 0;
+      });
     });
 
     newSocket.on("partner-disconnected", () => {
@@ -580,6 +602,66 @@ function Cider() {
       }
     }
   };
+
+  // Scroll to bottom function
+  const scrollToBottom = useCallback((smooth = true) => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: smooth ? "smooth" : "auto",
+        block: "end",
+      });
+    }
+    setUnreadCount(0);
+    setIsUserScrolledUp(false);
+  }, []);
+
+  // Handle scroll events to detect when user scrolls up
+  const handleMessagesScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const threshold = 100; // pixels from bottom
+    const isScrolledUp =
+      container.scrollHeight - container.scrollTop - container.clientHeight >
+      threshold;
+
+    setIsUserScrolledUp(isScrolledUp);
+
+    // Clear unread count when user scrolls to bottom
+    if (!isScrolledUp) {
+      setUnreadCount(0);
+    }
+  }, []);
+
+  // Auto-scroll to bottom when new messages arrive (if user hasn't scrolled up)
+  useEffect(() => {
+    const currentLength = messages.length;
+    const prevLength = prevMessagesLengthRef.current;
+
+    if (currentLength > prevLength) {
+      // New message arrived
+      const lastMessage = messages[messages.length - 1];
+      const isOwnMessage = lastMessage?.type === "you";
+      const isSystemMessage = lastMessage?.type === "system";
+
+      // Always scroll for own messages or system messages, or if user is at bottom
+      if (isOwnMessage || isSystemMessage || !isUserScrolledUp) {
+        // Use setTimeout to ensure DOM has updated
+        setTimeout(() => scrollToBottom(true), 50);
+      }
+    }
+
+    prevMessagesLengthRef.current = currentLength;
+  }, [messages, isUserScrolledUp, scrollToBottom]);
+
+  // Scroll to bottom on initial render and when starting new chat
+  useEffect(() => {
+    if (status === "waiting") {
+      setUnreadCount(0);
+      setIsUserScrolledUp(false);
+      setTimeout(() => scrollToBottom(false), 100);
+    }
+  }, [status, scrollToBottom]);
 
   return (
     <>
@@ -797,58 +879,83 @@ function Cider() {
                 <h2 className="text-2xl font-bold text-white mb-4">Chat</h2>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto space-y-2 mb-4 scrollbar-thin">
-                  {messages.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-3 rounded-lg ${
-                        msg.type === "system"
-                          ? "bg-zinc-800 text-zinc-400 text-center text-sm"
-                          : msg.type === "you"
-                          ? "bg-blue-900/30 border border-blue-800 text-blue-100 ml-auto max-w-[80%]"
-                          : "bg-zinc-800 text-zinc-200 mr-auto max-w-[80%]"
-                      }`}
-                    >
-                      {msg.type !== "system" && (
-                        <div className="text-xs opacity-75 mb-1">
-                          {msg.type === "you" ? "You" : "Stranger"}
-                        </div>
-                      )}
-                      {msg.text}
-                    </div>
-                  ))}
-
-                  {/* Typing Indicator */}
-                  {partnerTyping && status === "connected" && (
-                    <div className="p-3 rounded-lg bg-zinc-800 text-zinc-400 mr-auto max-w-[80%] animate-pulse">
-                      <div className="text-xs opacity-75 mb-1">Stranger</div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm">typing</span>
-                        <span
-                          className="typing-dot"
-                          style={{ animationDelay: "0ms" }}
-                        >
-                          .
-                        </span>
-                        <span
-                          className="typing-dot"
-                          style={{ animationDelay: "200ms" }}
-                        >
-                          .
-                        </span>
-                        <span
-                          className="typing-dot"
-                          style={{ animationDelay: "400ms" }}
-                        >
-                          .
-                        </span>
+                <div className="relative flex-1">
+                  <div
+                    ref={messagesContainerRef}
+                    onScroll={handleMessagesScroll}
+                    className="absolute inset-0 overflow-y-auto space-y-2 mb-4 chat-scrollbar pr-2"
+                  >
+                    {messages.map((msg, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-3 rounded-lg ${
+                          msg.type === "system"
+                            ? "bg-zinc-800 text-zinc-400 text-center text-sm"
+                            : msg.type === "you"
+                            ? "bg-blue-900/30 border border-blue-800 text-blue-100 ml-auto max-w-[80%]"
+                            : "bg-zinc-800 text-zinc-200 mr-auto max-w-[80%]"
+                        }`}
+                      >
+                        {msg.type !== "system" && (
+                          <div className="text-xs opacity-75 mb-1">
+                            {msg.type === "you" ? "You" : "Stranger"}
+                          </div>
+                        )}
+                        {msg.text}
                       </div>
-                    </div>
+                    ))}
+
+                    {/* Typing Indicator */}
+                    {partnerTyping && status === "connected" && (
+                      <div className="p-3 rounded-lg bg-zinc-800 text-zinc-400 mr-auto max-w-[80%] animate-pulse">
+                        <div className="text-xs opacity-75 mb-1">Stranger</div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm">typing</span>
+                          <span
+                            className="typing-dot"
+                            style={{ animationDelay: "0ms" }}
+                          >
+                            .
+                          </span>
+                          <span
+                            className="typing-dot"
+                            style={{ animationDelay: "200ms" }}
+                          >
+                            .
+                          </span>
+                          <span
+                            className="typing-dot"
+                            style={{ animationDelay: "400ms" }}
+                          >
+                            .
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Invisible element to scroll to */}
+                    <div ref={messagesEndRef} className="h-1" />
+                  </div>
+
+                  {/* Scroll to bottom button with unread count */}
+                  {isUserScrolledUp && (
+                    <button
+                      onClick={() => scrollToBottom(true)}
+                      className="absolute bottom-2 right-4 bg-zinc-700 hover:bg-zinc-600 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 flex items-center justify-center"
+                      style={{ minWidth: "36px", minHeight: "36px" }}
+                    >
+                      {unreadCount > 0 ? (
+                        <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      ) : null}
+                      <ChevronDown className="w-5 h-5" />
+                    </button>
                   )}
                 </div>
 
                 {/* Input */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-4">
                   <input
                     type="text"
                     value={inputMessage}
