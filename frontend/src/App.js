@@ -6,7 +6,6 @@ import {
   Send,
   SkipForward,
   Power,
-  Menu,
   User,
   Palette,
   UserCircle,
@@ -54,6 +53,7 @@ function Cider() {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [videoEnabled, setVideoEnabled] = useState(true);
+  // eslint-disable-next-line no-unused-vars
   const [partnerId, setPartnerId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [partnerTyping, setPartnerTyping] = useState(false);
@@ -781,7 +781,7 @@ function Cider() {
             className="max-w-7xl mx-auto"
             style={{ position: "relative", zIndex: 1 }}
           >
-            <h1 className="text-5xl font-semibold text-white text-center mb-8 mt-2"></h1>
+            <h1 className="text-5xl font-semibold text-white text-center mb-8 mt-2 sr-only">Video Chat</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Video Section */}

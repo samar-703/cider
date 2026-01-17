@@ -11,7 +11,6 @@ import {
   ArrowRight,
   Twitter,
   Github,
-  Heart,
   Sparkles,
 } from "lucide-react";
 import Particles from "./Particles";
@@ -422,28 +421,28 @@ function LandingPage() {
               <h4 className="text-white font-medium mb-4">Product</h4>
               <ul className="space-y-2">
                 <li>
-                  <a
-                    href="#"
+                  <button
+                    type="button"
                     className="text-zinc-400 text-sm hover:text-white transition-colors"
                   >
                     Features
-                  </a>
+                  </button>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <button
+                    type="button"
                     className="text-zinc-400 text-sm hover:text-white transition-colors"
                   >
                     Security
-                  </a>
+                  </button>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <button
+                    type="button"
                     className="text-zinc-400 text-sm hover:text-white transition-colors"
                   >
                     FAQ
-                  </a>
+                  </button>
                 </li>
               </ul>
             </div>
@@ -452,28 +451,28 @@ function LandingPage() {
               <h4 className="text-white font-medium mb-4">Legal</h4>
               <ul className="space-y-2">
                 <li>
-                  <a
-                    href="#"
+                  <button
+                    type="button"
                     className="text-zinc-400 text-sm hover:text-white transition-colors"
                   >
                     Privacy Policy
-                  </a>
+                  </button>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <button
+                    type="button"
                     className="text-zinc-400 text-sm hover:text-white transition-colors"
                   >
                     Terms of Service
-                  </a>
+                  </button>
                 </li>
                 <li>
-                  <a
-                    href="#"
+                  <button
+                    type="button"
                     className="text-zinc-400 text-sm hover:text-white transition-colors"
                   >
                     Guidelines
-                  </a>
+                  </button>
                 </li>
               </ul>
             </div>
@@ -486,18 +485,20 @@ function LandingPage() {
             </p>
 
             <div className="flex items-center gap-4">
-              <a
-                href="#"
+              <button
+                type="button"
+                aria-label="Twitter"
                 className="text-zinc-400 hover:text-white transition-colors"
               >
                 <Twitter size={20} />
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                type="button"
+                aria-label="GitHub"
                 className="text-zinc-400 hover:text-white transition-colors"
               >
                 <Github size={20} />
-              </a>
+              </button>
             </div>
           </div>
         </div>
