@@ -19,6 +19,7 @@ A modern, real-time video chat application that connects strangers for random vi
 - **Responsive Design**: Optimized for desktop and mobile devices
 - **Real-time Status Updates**: Visual feedback for connection states (waiting, connected, disconnected)
 - **Dual Video Layout**: Side-by-side video feeds for you and the stranger
+- **Real-time Chat Section**: Chat side by side live with the person
 
 ### Technical Features
 - **WebRTC Peer-to-Peer**: Direct browser-to-browser video streaming
