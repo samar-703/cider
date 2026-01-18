@@ -11,7 +11,6 @@ A modern, real-time video chat application that connects strangers for random vi
 - **User Authentication**: Secure sign-in powered by Clerk
 - **Video Controls**: Toggle your camera on/off during conversations
 - **Skip to Next**: Quickly move to the next stranger with one click
-- **Connection Management**: Start and stop chats with intuitive controls
 
 ### User Interface
 - **Modern Dark Theme**: Sleek black background with vibrant accent colors
