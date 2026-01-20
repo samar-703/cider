@@ -83,21 +83,10 @@ Navigate to the backend directory and install dependencies:
 ```bash
 cd backend
 npm install
-```
-
-Start the backend server:
-
-```bash
-npm start
+npm run dev
 ```
 
 The server will run on `http://localhost:5000` by default.
-
-For development with auto-reload:
-
-```bash
-npm run dev
-```
 
 ### 3. Frontend Setup
 
