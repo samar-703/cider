@@ -63,9 +63,9 @@ const featureCards = [
 ];
 
 const stats = [
-  { value: "1 click", label: "to start matching" },
-  { value: "Video + chat", label: "in one session" },
-  { value: "Skip anytime", label: "when it is not a fit" },
+  { value: "1 click", label: "to match worldwide" },
+  { value: "Live Video", label: "zero latency" },
+  { value: "Skip fast", label: "if it's not a vibe" },
 ];
 
 const reviews = [
@@ -157,11 +157,11 @@ function LandingPage() {
             >
               <Badge
                 variant="outline"
-                className="gap-2 border-white/10 bg-white/5 px-3 py-1 text-[#f8fafc] backdrop-blur-md"
+                className="gap-2 border-white/10 bg-white/5 px-3 py-1.5 md:py-1 text-[#f8fafc] backdrop-blur-md max-w-full text-center h-auto leading-normal"
               >
-                <StarIcon className="size-3 text-yellow-400" />
-                <span className="font-mono text-xs font-semibold uppercase tracking-widest text-[#cbd5e1]">
-                  Random video chat, rebuilt with a cleaner feel
+                <StarIcon className="size-3 text-yellow-400 shrink-0" />
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#cbd5e1] break-words whitespace-normal relative top-[1px]">
+                  "Connect with anyone, anywhere."
                 </span>
               </Badge>
             </motion.div>
@@ -314,13 +314,13 @@ function LandingPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3 border-t border-white/10 pt-6">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-white/10 pt-6">
                     {stats.map((stat) => (
-                      <div key={stat.label} className="group/stat text-center">
-                        <p className="text-xl font-bold text-[#f8fafc] transition-transform group-hover/stat:scale-110 group-hover/stat:text-[#60a5fa] lg:text-2xl">
+                      <div key={stat.label} className="group/stat text-center w-full sm:w-1/3">
+                        <p className="text-xl font-extrabold text-[#f8fafc] transition-colors group-hover/stat:text-cyan-400">
                           {stat.value}
                         </p>
-                        <p className="font-mono mt-1 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">
+                        <p className="mt-1.5 text-xs font-medium text-[#94a3b8] uppercase tracking-wide">
                           {stat.label}
                         </p>
                       </div>
