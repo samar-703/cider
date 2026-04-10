@@ -96,11 +96,7 @@ function Navbar({ onMenuClick, showMenuButton = false, variant = "landing" }) {
                 Sign In
               </button>
             </SignInAction>
-          ) : (
-            <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#94a3b8] shadow-inner backdrop-blur-md">
-              Auth disabled locally
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </nav>

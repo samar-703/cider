@@ -8,7 +8,6 @@ import {
   FaceIcon,
   ActivityLogIcon,
   StarIcon,
-  EnterIcon,
   LightningBoltIcon,
   TargetIcon,
   EyeNoneIcon,
@@ -95,20 +94,14 @@ const reviews = [
 
 function CTAButton() {
   if (!clerkEnabled) {
-    return (
-      <ShimmerButton className="shadow-2xl">
-        <span className="flex items-center gap-2 whitespace-pre-wrap text-center text-sm font-medium leading-none tracking-tight text-white lg:text-lg">
-          Explore Cider
-        </span>
-      </ShimmerButton>
-    );
+    return null;
   }
 
   return (
     <SignInAction>
       <ShimmerButton className="shadow-2xl">
         <span className="flex items-center gap-2 whitespace-pre-wrap text-center text-sm font-medium leading-none tracking-tight text-white lg:text-lg">
-          Sign In To Start
+          Explore Cider
           <ArrowRightIcon className="ml-1 size-4" />
         </span>
       </ShimmerButton>
@@ -204,13 +197,6 @@ function LandingPage() {
               className="mt-10 flex flex-wrap items-center gap-5"
             >
               <CTAButton />
-              <a
-                href="#how-it-works"
-                className="group flex h-12 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 font-semibold text-[#f8fafc] transition-all hover:scale-105 hover:border-white/20 hover:bg-white/10 active:scale-95"
-              >
-                See How It Works
-                <EnterIcon className="size-4 opacity-70 transition-transform group-hover:translate-x-1" />
-              </a>
             </motion.div>
           </div>
 
