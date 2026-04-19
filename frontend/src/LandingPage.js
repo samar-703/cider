@@ -1,5 +1,5 @@
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useEffect } from "react";
+import { motion, useMotionValue, useMotionTemplate } from "framer-motion";
 import {
   ArrowRightIcon,
   VideoIcon,
@@ -8,6 +8,7 @@ import {
   FaceIcon,
   ActivityLogIcon,
   StarIcon,
+  StarFilledIcon,
   LightningBoltIcon,
   TargetIcon,
   EyeNoneIcon,
@@ -74,21 +75,21 @@ const reviews = [
       "Finally a random chat app that feels current. It gets you into a conversation fast and the interface stays out of the way.",
     author: "Areeb",
     role: "Student",
-    accent: "from-cyan-500 to-sky-400",
+    accent: "from-zinc-400 to-zinc-600",
   },
   {
     quote:
       "The video-plus-chat combo makes awkward starts easier. If the vibe is off, skipping to the next person is instant.",
     author: "Nina",
     role: "Designer",
-    accent: "from-emerald-500 to-lime-400",
+    accent: "from-zinc-500 to-zinc-700",
   },
   {
     quote:
       "Most products in this category feel messy. This one feels cleaner, sharper, and much more intentional.",
     author: "Jay",
     role: "Developer",
-    accent: "from-violet-500 to-fuchsia-400",
+    accent: "from-zinc-300 to-zinc-500",
   },
 ];
 
@@ -119,20 +120,39 @@ const fadeInUp = {
 };
 
 function LandingPage() {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [mouseX, mouseY]);
+
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#0a0a0c]">
+    <div className="relative min-h-screen overflow-x-hidden bg-black">
+      <motion.div
+        className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
+        style={{
+          background: useMotionTemplate`radial-gradient(600px circle at ${mouseX}px ${mouseY}px, rgba(245, 158, 11, 0.07), transparent 80%)`,
+        }}
+      />
       <Navbar variant="landing" />
 
       <AnimatedGridPattern
         numSquares={60}
-        maxOpacity={0.12}
+        maxOpacity={0.08}
         duration={3}
-        className="z-0 text-[#06b6d4]/10"
+        className="z-0 text-white/10"
       />
 
       <div className="pointer-events-none fixed inset-0 z-0 opacity-40 mix-blend-screen">
         <Particles
-          particleColors={["#ffffff", "#0ea5e9", "#10b981"]}
+          particleColors={["#ffffff", "#f59e0b", "#fbbf24"]}
           particleCount={80}
           particleSpread={6}
           speed={0.1}
@@ -143,28 +163,12 @@ function LandingPage() {
         />
       </div>
 
-      <div className="pointer-events-none fixed left-[-10%] top-[-20%] h-[600px] w-[600px] rounded-full bg-[#10b981]/15 blur-[130px] mix-blend-screen" />
-      <div className="pointer-events-none fixed bottom-[-20%] right-[-10%] h-[600px] w-[600px] rounded-full bg-[#0ea5e9]/15 blur-[130px] mix-blend-screen" />
+      <div className="pointer-events-none fixed left-[-10%] top-[-20%] h-[600px] w-[600px] rounded-full bg-amber-600/10 blur-[130px] mix-blend-screen" />
+      <div className="pointer-events-none fixed bottom-[-20%] right-[-10%] h-[600px] w-[600px] rounded-full bg-amber-500/10 blur-[130px] mix-blend-screen" />
 
       <main className="relative z-10 w-full overflow-hidden">
         <section className="mx-auto flex min-h-screen max-w-7xl flex-col items-center justify-center px-6 pb-20 pt-32 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
           <div className="z-10 flex flex-col items-start text-left">
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={fadeInUp}
-              className="mb-8"
-            >
-              <Badge
-                variant="outline"
-                className="gap-2 border-white/10 bg-white/5 px-3 py-1.5 md:py-1 text-[#f8fafc] backdrop-blur-md max-w-full text-center h-auto leading-normal"
-              >
-                <StarIcon className="size-3 text-yellow-400 shrink-0" />
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#cbd5e1] break-words whitespace-normal relative top-[1px]">
-                  "Connect with anyone, anywhere."
-                </span>
-              </Badge>
-            </motion.div>
 
             <motion.h1
               initial="hidden"
@@ -173,7 +177,7 @@ function LandingPage() {
               className="max-w-2xl text-6xl font-black tracking-tight text-[#f1f5f9] sm:text-7xl lg:text-7xl drop-shadow-lg"
             >
               Meet someone new,
-              <span className="bg-gradient-to-r from-[#e2e8f0] via-[#0ea5e9] to-[#10b981] bg-clip-text text-transparent drop-shadow-sm">
+              <span className="bg-gradient-to-r from-white via-[#fcd34d] to-[#d97706] bg-clip-text text-transparent drop-shadow-sm">
                 {" "}
                 in a single click.
               </span>
@@ -216,22 +220,22 @@ function LandingPage() {
               transition={{ type: "spring", stiffness: 300 }}
               className="group relative perspective-[1000px]"
             >
-              <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-tr from-cyan-500/20 to-emerald-500/20 blur-xl opacity-70 transition-all duration-500 group-hover:blur-2xl" />
+              <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-tr from-amber-600/20 to-orange-700/20 blur-xl opacity-70 transition-all duration-500 group-hover:blur-2xl" />
 
-              <Card className="relative overflow-hidden rounded-[2rem] border-white/10 bg-[#060b13] shadow-2xl transition-all duration-500 group-hover:shadow-[0_0_90px_-15px_rgba(6,182,212,0.5)]">
+              <Card className="relative overflow-hidden rounded-[2rem] border-white/10 bg-[#020202] shadow-2xl transition-all duration-500 group-hover:shadow-[0_0_90px_-15px_rgba(255,255,255,0.1)]">
                 <BorderBeam
                   size={300}
                   duration={10}
                   delay={9}
                   className="opacity-70"
-                  colorFrom="#0ea5e9"
-                  colorTo="#10b981"
+                  colorFrom="#f59e0b"
+                  colorTo="#b45309"
                 />
 
                 <CardContent className="space-y-6 pt-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-[#60a5fa]">
+                      <p className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-amber-500">
                         Conversation Preview
                       </p>
                       <h2 className="mt-1 text-xl font-bold text-[#f8fafc]">
@@ -244,26 +248,26 @@ function LandingPage() {
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="group/video relative aspect-[4/5] flex-col justify-between overflow-hidden rounded-2xl border border-white/5 bg-[#0f172a] p-4 shadow-[inset_0_0_30px_rgba(0,0,0,0.8)]">
+                    <div className="group/video relative aspect-[4/5] flex-col justify-between overflow-hidden rounded-2xl border border-white/5 bg-[#050505] p-4 shadow-[inset_0_0_30px_rgba(0,0,0,0.8)]">
                       <img
                         src="/mockup_camera.png"
                         alt="Camera feed preview"
                         className="absolute inset-0 h-full w-full object-cover opacity-80 saturate-150 contrast-125 mix-blend-screen"
                       />
-                      <div className="absolute inset-0 bg-cyan-900/10 mix-blend-overlay" />
+                      <div className="absolute inset-0 bg-zinc-900/10 mix-blend-overlay" />
 
                       <motion.div
                         animate={{ top: ["0%", "100%", "0%"] }}
                         transition={{ duration: 4, ease: "linear", repeat: Infinity }}
-                        className="absolute left-0 right-0 z-0 h-px bg-cyan-400 opacity-50 shadow-[0_0_15px_3px_rgba(34,211,238,0.5)]"
+                        className="absolute left-0 right-0 z-0 h-px bg-amber-400 opacity-50 shadow-[0_0_15px_3px_rgba(255,255,255,0.5)]"
                       />
 
                       <div className="relative z-10 flex w-max items-center gap-2 rounded-md bg-black/40 px-2.5 py-1.5 text-xs font-semibold text-white drop-shadow-md backdrop-blur-md">
-                        <FaceIcon className="size-4 text-cyan-300" />
+                        <FaceIcon className="size-4 text-amber-500" />
                         Camera Feed
                       </div>
 
-                      <div className="pointer-events-none absolute inset-x-0 bottom-0 top-1/2 bg-gradient-to-t from-cyan-900/60 to-transparent mix-blend-screen" />
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 top-1/2 bg-gradient-to-t from-zinc-900/60 to-transparent mix-blend-screen" />
 
                       <div className="relative z-10 mt-auto flex w-full items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -273,17 +277,17 @@ function LandingPage() {
                           </span>
                         </div>
                         <div className="flex h-4 items-end gap-[3px] rounded bg-black/40 p-1.5 backdrop-blur-md border border-white/5">
-                          <motion.div animate={{ height: ["40%", "100%", "40%"] }} transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut" }} className="w-1 rounded-sm bg-[#38bdf8]" />
-                          <motion.div animate={{ height: ["20%", "80%", "20%"] }} transition={{ duration: 0.4, repeat: Infinity, ease: "easeInOut", delay: 0.1 }} className="w-1 rounded-sm bg-[#38bdf8]" />
-                          <motion.div animate={{ height: ["60%", "100%", "60%"] }} transition={{ duration: 0.6, repeat: Infinity, ease: "easeInOut", delay: 0.2 }} className="w-1 rounded-sm bg-[#38bdf8]" />
-                          <motion.div animate={{ height: ["30%", "90%", "30%"] }} transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }} className="w-1 rounded-sm bg-[#38bdf8]" />
+                          <motion.div animate={{ height: ["40%", "100%", "40%"] }} transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut" }} className="w-1 rounded-sm bg-amber-400" />
+                          <motion.div animate={{ height: ["20%", "80%", "20%"] }} transition={{ duration: 0.4, repeat: Infinity, ease: "easeInOut", delay: 0.1 }} className="w-1 rounded-sm bg-amber-400" />
+                          <motion.div animate={{ height: ["60%", "100%", "60%"] }} transition={{ duration: 0.6, repeat: Infinity, ease: "easeInOut", delay: 0.2 }} className="w-1 rounded-sm bg-amber-400" />
+                          <motion.div animate={{ height: ["30%", "90%", "30%"] }} transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }} className="w-1 rounded-sm bg-amber-400" />
                         </div>
                       </div>
                     </div>
 
                     <div className="relative z-10 space-y-4">
-                      <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-5 backdrop-blur-sm transition-colors hover:bg-blue-500/20">
-                        <p className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-[#60a5fa]">
+                      <div className="rounded-2xl border border-zinc-500/20 bg-amber-600/10 p-5 backdrop-blur-sm transition-colors hover:bg-zinc-500/20">
+                        <p className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-amber-500">
                           What you get
                         </p>
                         <p className="mt-2 text-sm leading-relaxed text-[#bae6fd]">
@@ -298,15 +302,15 @@ function LandingPage() {
                         </div>
                         <ul className="space-y-2 text-xs font-medium text-[#cbd5e1]">
                           <li className="flex items-center gap-2">
-                            <span className="size-2 rounded-full bg-[#34d399] animate-pulse" />
+                            <span className="size-2 rounded-full bg-amber-400 animate-pulse" />
                             WebRTC media session
                           </li>
                           <li className="flex items-center gap-2">
-                            <span className="size-2 rounded-full bg-[#0ea5e9]" />
+                            <span className="size-2 rounded-full bg-zinc-500" />
                             Socket.IO matchmaking
                           </li>
                           <li className="flex items-center gap-2">
-                            <span className="size-2 rounded-full bg-[#cbd5e1]" />
+                            <span className="size-2 rounded-full bg-zinc-600" />
                             Realtime text chat
                           </li>
                         </ul>
@@ -317,7 +321,7 @@ function LandingPage() {
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-white/10 pt-6">
                     {stats.map((stat) => (
                       <div key={stat.label} className="group/stat text-center w-full sm:w-1/3">
-                        <p className="text-xl font-extrabold text-[#f8fafc] transition-colors group-hover/stat:text-cyan-400">
+                        <p className="text-xl font-extrabold text-[#f8fafc] transition-colors group-hover/stat:text-white">
                           {stat.value}
                         </p>
                         <p className="mt-1.5 text-xs font-medium text-[#94a3b8] uppercase tracking-wide">
@@ -342,7 +346,7 @@ function LandingPage() {
           >
             <h2 className="text-4xl font-black tracking-tight text-[#f8fafc] md:text-6xl drop-shadow-md">
               Built for{" "}
-              <span className="bg-gradient-to-r from-[#22d3ee] to-[#10b981] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-zinc-100 to-amber-500 bg-clip-text text-transparent">
                 spontaneous conversation.
               </span>
             </h2>
@@ -358,14 +362,14 @@ function LandingPage() {
                 {[...featureCards, ...featureCards].map(({ icon: Icon, title, description }, i) => (
                   <div
                     key={`${title}-${i}-1`}
-                    className="group relative mx-3 flex h-[260px] w-[350px] shrink-0 flex-col justify-between overflow-hidden rounded-[2rem] border border-white/10 bg-[#111827]/80 p-8 backdrop-blur-md transition-all hover:border-white/20 hover:bg-[#1f2937]/90 hover:shadow-2xl"
+                    className="group relative mx-3 flex h-[260px] w-[350px] shrink-0 flex-col justify-between overflow-hidden rounded-[2rem] border border-white/10 bg-[#050505]/80 p-8 backdrop-blur-md transition-all hover:border-white/20 hover:bg-[#1f2937]/90 hover:shadow-2xl"
                   >
-                    <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-cyan-500/5 to-transparent opacity-0 mix-blend-overlay transition-opacity duration-500 group-hover:opacity-100" />
-                    <div className="relative z-10 mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/5 bg-gradient-to-br from-[#1e293b] to-[#0f172a] text-[#f1f5f9] shadow-inner transition-colors duration-300 group-hover:border-cyan-500/50">
+                    <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-amber-500/5 to-transparent opacity-0 mix-blend-overlay transition-opacity duration-500 group-hover:opacity-100" />
+                    <div className="relative z-10 mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/5 bg-gradient-to-br from-[#111] to-black text-[#f1f5f9] shadow-inner transition-colors duration-300 group-hover:border-amber-500/40">
                       <Icon className="size-6 transition-transform group-hover:scale-125" />
                     </div>
                     <div>
-                      <h3 className="relative z-10 text-2xl font-bold tracking-tight text-[#f8fafc] transition-colors group-hover:text-[#22d3ee]">
+                      <h3 className="relative z-10 text-2xl font-bold tracking-tight text-[#f8fafc] transition-colors group-hover:text-white">
                         {title}
                       </h3>
                       <p className="relative z-10 mt-3 text-sm font-medium leading-relaxed text-[#64748b] transition-colors group-hover:text-[#e2e8f0]">
@@ -383,14 +387,14 @@ function LandingPage() {
                 {[...featureCards, ...featureCards].map(({ icon: Icon, title, description }, i) => (
                   <div
                     key={`${title}-${i}-2`}
-                    className="group relative mx-3 flex h-[260px] w-[350px] shrink-0 flex-col justify-between overflow-hidden rounded-[2rem] border border-white/10 bg-[#111827]/80 p-8 backdrop-blur-md transition-all hover:border-white/20 hover:bg-[#1f2937]/90 hover:shadow-2xl"
+                    className="group relative mx-3 flex h-[260px] w-[350px] shrink-0 flex-col justify-between overflow-hidden rounded-[2rem] border border-white/10 bg-[#050505]/80 p-8 backdrop-blur-md transition-all hover:border-white/20 hover:bg-[#1f2937]/90 hover:shadow-2xl"
                   >
-                    <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-cyan-500/5 to-transparent opacity-0 mix-blend-overlay transition-opacity duration-500 group-hover:opacity-100" />
-                    <div className="relative z-10 mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/5 bg-gradient-to-br from-[#1e293b] to-[#0f172a] text-[#f1f5f9] shadow-inner transition-colors duration-300 group-hover:border-cyan-500/50">
+                    <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-amber-500/5 to-transparent opacity-0 mix-blend-overlay transition-opacity duration-500 group-hover:opacity-100" />
+                    <div className="relative z-10 mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/5 bg-gradient-to-br from-[#111] to-black text-[#f1f5f9] shadow-inner transition-colors duration-300 group-hover:border-amber-500/40">
                       <Icon className="size-6 transition-transform group-hover:scale-125" />
                     </div>
                     <div>
-                      <h3 className="relative z-10 text-2xl font-bold tracking-tight text-[#f8fafc] transition-colors group-hover:text-[#22d3ee]">
+                      <h3 className="relative z-10 text-2xl font-bold tracking-tight text-[#f8fafc] transition-colors group-hover:text-white">
                         {title}
                       </h3>
                       <p className="relative z-10 mt-3 text-sm font-medium leading-relaxed text-[#64748b] transition-colors group-hover:text-[#e2e8f0]">
@@ -410,11 +414,11 @@ function LandingPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-[3rem] border border-white/10 bg-gradient-to-b from-[#1e1b4b]/40 to-transparent p-10 shadow-2xl md:p-20"
+            className="relative overflow-hidden rounded-[3rem] border border-white/10 bg-gradient-to-b from-black/60 to-transparent p-10 shadow-2xl md:p-20"
           >
             <div className="absolute inset-0 bg-grid-white/[0.03]" />
-            <div className="absolute -left-40 top-1/2 h-96 w-96 -translate-y-1/2 rounded-[50%] bg-[#0ea5e9]/10 blur-[130px]" />
-            <div className="absolute -right-40 top-1/2 h-96 w-96 -translate-y-1/2 rounded-[50%] bg-[#10b981]/10 blur-[130px]" />
+            <div className="absolute -left-40 top-1/2 h-96 w-96 -translate-y-1/2 rounded-[50%] bg-amber-600/10 blur-[130px]" />
+            <div className="absolute -right-40 top-1/2 h-96 w-96 -translate-y-1/2 rounded-[50%] bg-amber-600/10 blur-[130px]" />
 
             <div className="relative z-10 grid items-center gap-16 lg:grid-cols-[1fr_1.5fr]">
               <div>
@@ -462,9 +466,9 @@ function LandingPage() {
                   <motion.div
                     key={item.step}
                     whileHover={{ scale: 1.05 }}
-                    className="cursor-default rounded-[2rem] border border-white/10 bg-black/40 p-8 backdrop-blur-md shadow-xl transition-colors hover:border-blue-500/30 hover:bg-black/60"
+                    className="cursor-default rounded-[2rem] border border-white/10 bg-black/40 p-8 backdrop-blur-md shadow-xl transition-colors hover:border-white/30 hover:bg-black/60"
                   >
-                    <p className="mb-4 font-mono text-sm font-bold tracking-widest text-[#60a5fa]">
+                    <p className="mb-4 font-mono text-sm font-bold tracking-widest text-amber-500">
                       {item.step}
                     </p>
                     <p className="mb-3 text-xl font-bold text-[#f1f5f9]">
@@ -500,15 +504,14 @@ function LandingPage() {
               <motion.div
                 key={author}
                 whileHover={{ y: -10 }}
-                className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/5 bg-[#171717] p-8"
+                className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/5 bg-[#050505] p-8"
               >
-                <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${accent}`} />
                 <div className="mb-6 flex items-center gap-1 text-yellow-400">
-                  <StarIcon />
-                  <StarIcon />
-                  <StarIcon />
-                  <StarIcon />
-                  <StarIcon />
+                  <StarFilledIcon />
+                  <StarFilledIcon />
+                  <StarFilledIcon />
+                  <StarFilledIcon />
+                  <StarFilledIcon />
                 </div>
                 <p className="text-lg font-medium leading-relaxed text-[#cbd5e1]">
                   "{quote}"
