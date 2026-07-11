@@ -73,7 +73,7 @@ const reviews = [
   {
     quote:
       "Finally a random chat app that feels current. It gets you into a conversation fast and the interface stays out of the way.",
-    author: "Areeb",
+    author: "Amrit",
     role: "Student",
     accent: "from-zinc-400 to-zinc-600",
   },
