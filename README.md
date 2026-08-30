@@ -1,6 +1,6 @@
 # Cider - Omegle Clone
 
-A modern, real-time video chat application that connects strangers for random video conversations, inspired by Omegle. Built with React, Node.js, Socket.IO, and WebRTC.
+A real-time video chat application that connects strangers for random video conversations, inspired by Omegle. Built with React, Node.js, Socket.IO, and WebRTC.
 
 ## Features
 
